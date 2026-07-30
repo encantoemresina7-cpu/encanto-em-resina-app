@@ -1,798 +1,134 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Encanto em Resina - Sistema de Orçamentos</title>
-<meta name="theme-color" content="#ff9800">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Encanto em Resina - Sistema de Orçamentos</title>
+  <meta name="theme-color" content="#ff9800">
 
-<link rel="manifest" href="manifest.json">
-<link rel="icon" href="favicon.png">
-<link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="favicon.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
 
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Encanto em Resina">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Encanto em Resina">
 
-<style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:Arial,Helvetica,sans-serif;
-}
-
-body{
-    min-height:100vh;
-    padding:20px;
-    background:linear-gradient(135deg,#ff9800,#ffb74d);
-}
-
-.app{
-    width:100%;
-    max-width:470px;
-    margin:auto;
-}
-
-.cabecalho{
-    text-align:center;
-    color:white;
-    margin-bottom:18px;
-}
-
-.logo{
-    font-size:54px;
-}
-
-.cabecalho h1{
-    font-size:28px;
-    margin:5px 0;
-}
-
-.versao{
-    font-size:13px;
-    opacity:.9;
-}
-
-.card{
-    background:#fff;
-    padding:20px;
-    border-radius:18px;
-    margin-bottom:16px;
-    box-shadow:0 10px 25px rgba(0,0,0,.16);
-}
-
-.card h2{
-    color:#ff9800;
-    font-size:19px;
-    margin-bottom:14px;
-}
-
-label{
-    display:block;
-    margin-top:13px;
-    margin-bottom:6px;
-    font-weight:bold;
-    color:#333;
-}
-
-input,
-select{
-    width:100%;
-    padding:14px;
-    border:1px solid #ddd;
-    border-radius:10px;
-    font-size:16px;
-    background:white;
-}
-
-input:focus,
-select:focus{
-    outline:none;
-    border-color:#ff9800;
-    box-shadow:0 0 0 3px rgba(255,152,0,.15);
-}
-
-.cores{
-    display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:10px;
-    margin-top:10px;
-}
-
-.cor-opcao{
-    border:2px solid #eee;
-    border-radius:12px;
-    padding:12px 10px;
-    background:#fff;
-    cursor:pointer;
-    font-weight:bold;
-    text-align:center;
-    transition:.2s;
-}
-
-.cor-opcao:hover{
-    transform:translateY(-1px);
-}
-
-.cor-opcao.ativa{
-    border-color:#ff9800;
-    background:#fff3e0;
-}
-
-button{
-    width:100%;
-    padding:15px;
-    margin-top:14px;
-    border:none;
-    border-radius:10px;
-    font-size:16px;
-    font-weight:bold;
-    cursor:pointer;
-}
-
-.btn-calcular{
-    background:#ff9800;
-    color:#fff;
-}
-
-.btn-frete{
-    background:#1976d2;
-    color:#fff;
-}
-
-.btn-copiar{
-    background:#2e7d32;
-    color:#fff;
-}
-
-.btn-limpar{
-    background:#eceff1;
-    color:#333;
-}
-
-.resumo-linha{
-    display:flex;
-    justify-content:space-between;
-    gap:15px;
-    margin:9px 0;
-}
-
-.resumo-linha span:first-child{
-    color:#555;
-}
-
-.resumo-linha strong{
-    text-align:right;
-}
-
-.total{
-    margin-top:14px;
-    padding-top:14px;
-    border-top:1px solid #ffcc80;
-    color:#2e7d32;
-    font-size:21px;
-    font-weight:bold;
-}
-
-.mensagem{
-    display:none;
-    margin-top:12px;
-    padding:11px;
-    border-radius:10px;
-    background:#e8f5e9;
-    color:#1b5e20;
-    text-align:center;
-    font-weight:bold;
-}
-
-
-.status-frete{
-    display:none;
-    margin-top:12px;
-    padding:12px;
-    border-radius:10px;
-    text-align:center;
-    font-weight:bold;
-}
-
-.status-frete.carregando{
-    display:block;
-    background:#e3f2fd;
-    color:#0d47a1;
-}
-
-.status-frete.erro{
-    display:block;
-    background:#ffebee;
-    color:#b71c1c;
-}
-
-.status-frete.sucesso{
-    display:block;
-    background:#e8f5e9;
-    color:#1b5e20;
-}
-
-.opcoes-frete{
-    display:grid;
-    gap:10px;
-    margin-top:12px;
-}
-
-.opcao-frete{
-    width:100%;
-    margin-top:0;
-    padding:14px;
-    border:2px solid #e0e0e0;
-    background:#fff;
-    color:#222;
-    text-align:left;
-    border-radius:12px;
-}
-
-.opcao-frete:hover{
-    border-color:#1976d2;
-}
-
-.opcao-frete.ativa{
-    border-color:#2e7d32;
-    background:#e8f5e9;
-}
-
-.opcao-frete-topo{
-    display:flex;
-    justify-content:space-between;
-    gap:12px;
-    align-items:center;
-}
-
-.opcao-frete-nome{
-    font-size:17px;
-    font-weight:bold;
-}
-
-.opcao-frete-valor{
-    color:#2e7d32;
-    font-size:18px;
-    font-weight:bold;
-}
-
-.opcao-frete-prazo{
-    display:block;
-    margin-top:5px;
-    color:#666;
-    font-size:14px;
-    font-weight:normal;
-}
-
-.dica-frete{
-    margin-top:9px;
-    color:#666;
-    font-size:13px;
-    line-height:1.4;
-}
-
-.btn-frete:disabled{
-    opacity:.65;
-    cursor:not-allowed;
-}
-
-@media(max-width:420px){
-    body{padding:12px;}
-    .card{padding:17px;}
-    .cores{grid-template-columns:1fr 1fr;}
-}
-</style>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
-<div class="app">
-
+  <main class="app">
     <header class="cabecalho">
-        <div class="logo">💡</div>
-       <h1>Encanto em Resina</h1>
-        <div class="versao">Sistema de Orçamentos • Versão 3.0</div>
+      <div class="logo">💡</div>
+      <h1>Encanto em Resina</h1>
+      <div class="versao">Sistema de Orçamentos • Versão 4.0</div>
     </header>
 
     <section class="card">
-        <h2>👤 Dados do cliente</h2>
+      <h2>👤 Dados do cliente</h2>
 
-        <label for="cliente">Cliente</label>
-        <input type="text" id="cliente" placeholder="Nome do cliente">
+      <label for="cliente">Cliente</label>
+      <input type="text" id="cliente" placeholder="Nome do cliente">
 
-        <label for="telefone">WhatsApp</label>
-        <input type="text" id="telefone" placeholder="(00) 00000-0000">
+      <label for="telefone">WhatsApp</label>
+      <input type="text" id="telefone" placeholder="(00) 00000-0000">
 
-        <label for="cidade">Cidade</label>
-        <input type="text" id="cidade" placeholder="Cidade">
+      <label for="cidade">Cidade</label>
+      <input type="text" id="cidade" placeholder="Cidade">
     </section>
 
     <section class="card">
-        <h2>💡 Dados da luminária</h2>
+      <h2>💡 Dados da luminária</h2>
 
-        <label for="nome">Nome da luminária</label>
-        <input type="text" id="nome" placeholder="Exemplo: Aurora" maxlength="25">
+      <label for="nome">Nome da luminária</label>
+      <input type="text" id="nome" placeholder="Exemplo: Aurora" maxlength="25">
 
-        <label for="quantidade">Quantidade de letras</label>
-        <input type="number" id="quantidade" min="1" max="25" placeholder="Automático">
+      <label for="quantidade">Quantidade de letras</label>
+      <input type="number" id="quantidade" min="1" max="25" placeholder="Automático">
 
-        <label>🎨 Cor da luminária</label>
+      <label for="quantidadeLuminarias">📦 Quantidade de luminárias</label>
+      <select id="quantidadeLuminarias">
+        <option value="1">1 luminária</option>
+        <option value="2">2 luminárias</option>
+        <option value="3">3 luminárias</option>
+        <option value="4">4 luminárias</option>
+      </select>
 
-        <div class="cores" id="cores">
-            <button type="button" class="cor-opcao ativa" data-cor="Transparente">🤍 Transparente</button>
-            <button type="button" class="cor-opcao" data-cor="Rosa">🩷 Rosa</button>
-            <button type="button" class="cor-opcao" data-cor="Azul">💙 Azul</button>
-            <button type="button" class="cor-opcao" data-cor="Verde">💚 Verde</button>
-            <button type="button" class="cor-opcao" data-cor="Lilás">💜 Lilás</button>
-            <button type="button" class="cor-opcao" data-cor="Dourada">💛 Dourada</button>
-            <button type="button" class="cor-opcao" data-cor="Vermelha">❤️ Vermelha</button>
-        </div>
+      <div class="medidas" id="medidasEmbalagem">
+        Embalagem: 8 × 10 × 30 cm
+      </div>
 
-        <button type="button" class="btn-calcular" id="btnCalcular">
-            Calcular luminária
-        </button>
+      <label>🎨 Cor da luminária</label>
+      <div class="cores" id="cores">
+        <button type="button" class="cor-opcao ativa" data-cor="Transparente">🤍 Transparente</button>
+        <button type="button" class="cor-opcao" data-cor="Rosa">🩷 Rosa</button>
+        <button type="button" class="cor-opcao" data-cor="Azul">💙 Azul</button>
+        <button type="button" class="cor-opcao" data-cor="Verde">💚 Verde</button>
+        <button type="button" class="cor-opcao" data-cor="Lilás">💜 Lilás</button>
+        <button type="button" class="cor-opcao" data-cor="Dourada">💛 Dourada</button>
+        <button type="button" class="cor-opcao" data-cor="Vermelha">❤️ Vermelha</button>
+      </div>
+
+      <button type="button" class="btn-calcular" id="btnCalcular">
+        Calcular luminária
+      </button>
     </section>
 
     <section class="card">
-        <h2>🚚 Calcular frete automaticamente</h2>
+      <h2>🚚 Calcular frete automaticamente</h2>
 
-        <label for="cepDestino">CEP do cliente</label>
-        <input
-            type="text"
-            inputmode="numeric"
-            id="cepDestino"
-            maxlength="9"
-            placeholder="00000-000"
-            autocomplete="postal-code"
-        >
+      <label for="cepDestino">CEP do cliente</label>
+      <input
+        type="text"
+        inputmode="numeric"
+        id="cepDestino"
+        maxlength="9"
+        placeholder="00000-000"
+        autocomplete="postal-code"
+      >
 
-        <button type="button" class="btn-frete" id="btnFrete">
-            🚚 Consultar frete
-        </button>
+      <button type="button" class="btn-frete" id="btnFrete">
+        🚚 Consultar frete
+      </button>
 
-        <div class="status-frete" id="statusFrete"></div>
-        <div class="opcoes-frete" id="opcoesFrete"></div>
+      <div class="status-frete" id="statusFrete"></div>
+      <div class="opcoes-frete" id="opcoesFrete"></div>
 
-        <p class="dica-frete">
-            A primeira consulta pode demorar até cerca de 50 segundos porque o servidor gratuito do Render pode estar em repouso.
-        </p>
+      <p class="dica-frete">
+        A primeira consulta pode demorar até cerca de 50 segundos porque o servidor gratuito do Render pode estar em repouso.
+      </p>
 
-        <label for="frete">Frete selecionado</label>
-        <input type="text" inputmode="decimal" id="frete" placeholder="0,00" readonly>
+      <label for="frete">Frete selecionado</label>
+      <input type="text" inputmode="decimal" id="frete" placeholder="0,00" readonly>
     </section>
 
     <section class="card">
-        <h2>📋 Resumo do orçamento</h2>
+      <h2>📋 Resumo do orçamento</h2>
 
-        <div class="resumo-linha">
-            <span>Cliente:</span>
-            <strong id="resCliente">—</strong>
-        </div>
+      <div class="resumo-linha"><span>Cliente:</span><strong id="resCliente">—</strong></div>
+      <div class="resumo-linha"><span>Nome:</span><strong id="resNome">—</strong></div>
+      <div class="resumo-linha"><span>Cor:</span><strong id="resCor">Transparente</strong></div>
+      <div class="resumo-linha"><span>Letras:</span><strong id="resQuantidade">0 letras</strong></div>
+      <div class="resumo-linha"><span>Luminárias:</span><strong id="resLuminarias">1</strong></div>
+      <div class="resumo-linha"><span>Embalagem:</span><strong id="resEmbalagem">8 × 10 × 30 cm</strong></div>
+      <div class="resumo-linha"><span>Preço base:</span><strong id="resBase">R$ 0,00</strong></div>
+      <div class="resumo-linha"><span>Letras extras:</span><strong id="resExtras">0</strong></div>
+      <div class="resumo-linha"><span>Adicional:</span><strong id="resAdicional">R$ 0,00</strong></div>
+      <div class="resumo-linha"><span>Frete:</span><strong id="resFrete">R$ 0,00</strong></div>
 
-        <div class="resumo-linha">
-            <span>Nome:</span>
-            <strong id="resNome">—</strong>
-        </div>
+      <div class="resumo-linha total">
+        <span>Total:</span>
+        <strong id="resTotal">R$ 0,00</strong>
+      </div>
 
-        <div class="resumo-linha">
-            <span>Cor:</span>
-            <strong id="resCor">Transparente</strong>
-        </div>
+      <button type="button" class="btn-copiar" id="btnCopiar">📋 Copiar orçamento</button>
+      <button type="button" class="btn-limpar" id="btnLimpar">🧹 Novo cálculo</button>
 
-        <div class="resumo-linha">
-            <span>Quantidade:</span>
-            <strong id="resQuantidade">0 letras</strong>
-        </div>
-
-        <div class="resumo-linha">
-            <span>Preço base:</span>
-            <strong id="resBase">R$ 0,00</strong>
-        </div>
-
-        <div class="resumo-linha">
-            <span>Letras extras:</span>
-            <strong id="resExtras">0</strong>
-        </div>
-
-        <div class="resumo-linha">
-            <span>Adicional:</span>
-            <strong id="resAdicional">R$ 0,00</strong>
-        </div>
-
-        <div class="resumo-linha">
-            <span>Frete:</span>
-            <strong id="resFrete">R$ 0,00</strong>
-        </div>
-
-        <div class="resumo-linha total">
-            <span>Total:</span>
-            <strong id="resTotal">R$ 0,00</strong>
-        </div>
-
-        <button type="button" class="btn-copiar" id="btnCopiar">
-            📋 Copiar orçamento
-        </button>
-
-        <button type="button" class="btn-limpar" id="btnLimpar">
-            🧹 Novo cálculo
-        </button>
-
-        <div class="mensagem" id="mensagem">
-            Orçamento copiado!
-        </div>
+      <div class="mensagem" id="mensagem">Orçamento copiado!</div>
     </section>
+  </main>
 
-</div>
-
-<script>
-(function(){
-    "use strict";
-
-    const VALOR_BASE = 89.99;
-    const LIMITE_BASE = 5;
-    const VALOR_EXTRA = 5;
-    const API_FRETE_URL = "https://calculadora-aurora.onrender.com/calcular-frete";
-
-    let corSelecionada = "Transparente";
-    let valorProdutoAtual = 0;
-
-    const cliente = document.getElementById("cliente");
-    const telefone = document.getElementById("telefone");
-    const cidade = document.getElementById("cidade");
-    const nome = document.getElementById("nome");
-    const quantidade = document.getElementById("quantidade");
-    const frete = document.getElementById("frete");
-    const cepDestino = document.getElementById("cepDestino");
-    const statusFrete = document.getElementById("statusFrete");
-    const opcoesFrete = document.getElementById("opcoesFrete");
-    const btnFrete = document.getElementById("btnFrete");
-
-    let servicoFreteSelecionado = "";
-    let prazoFreteSelecionado = null;
-
-    function moeda(valor){
-        return valor.toLocaleString("pt-BR",{
-            style:"currency",
-            currency:"BRL"
-        });
-    }
-
-    function contarLetras(texto){
-        return texto
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g,"")
-            .replace(/[^a-zA-Z]/g,"")
-            .length;
-    }
-
-    function lerFrete(){
-        const texto = frete.value
-            .trim()
-            .replace(/\./g,"")
-            .replace(",",".");
-        const numero = Number(texto);
-        return Number.isFinite(numero) && numero >= 0 ? numero : 0;
-    }
-
-    function calcular(qtd){
-        const valido = Number.isInteger(qtd) && qtd > 0;
-
-        if(!valido){
-            valorProdutoAtual = 0;
-            atualizarResumo(0,0,0);
-            return;
-        }
-
-        const extras = Math.max(0,qtd - LIMITE_BASE);
-        const adicional = extras * VALOR_EXTRA;
-        valorProdutoAtual = VALOR_BASE + adicional;
-
-        atualizarResumo(qtd,extras,adicional);
-    }
-
-    function atualizarResumo(qtd,extras,adicional){
-        const valorDoFrete = lerFrete();
-
-        document.getElementById("resCliente").textContent =
-            cliente.value.trim() || "—";
-
-        document.getElementById("resNome").textContent =
-            nome.value.trim() || "—";
-
-        document.getElementById("resCor").textContent = corSelecionada;
-
-        document.getElementById("resQuantidade").textContent =
-            qtd + (qtd === 1 ? " letra" : " letras");
-
-        document.getElementById("resBase").textContent =
-            qtd > 0 ? moeda(VALOR_BASE) : moeda(0);
-
-        document.getElementById("resExtras").textContent = String(extras);
-        document.getElementById("resAdicional").textContent = moeda(adicional);
-        document.getElementById("resFrete").textContent = moeda(valorDoFrete);
-        document.getElementById("resTotal").textContent =
-            moeda(valorProdutoAtual + valorDoFrete);
-    }
-
-    function calcularPeloNome(){
-        const qtd = contarLetras(nome.value);
-        quantidade.value = qtd > 0 ? String(qtd) : "";
-        calcular(qtd);
-    }
-
-    nome.addEventListener("input",calcularPeloNome);
-
-    quantidade.addEventListener("input",function(){
-        calcular(Number(quantidade.value));
-    });
-
-    frete.addEventListener("input",function(){
-        calcular(Number(quantidade.value));
-    });
-
-    cliente.addEventListener("input",function(){
-        calcular(Number(quantidade.value));
-    });
-
-    document.querySelectorAll(".cor-opcao").forEach(function(botao){
-        botao.addEventListener("click",function(){
-            document.querySelectorAll(".cor-opcao").forEach(function(item){
-                item.classList.remove("ativa");
-            });
-
-            botao.classList.add("ativa");
-            corSelecionada = botao.dataset.cor;
-            calcular(Number(quantidade.value));
-        });
-    });
-
-    document.getElementById("btnCalcular").addEventListener("click",function(){
-        if(nome.value.trim()){
-            calcularPeloNome();
-        }else{
-            calcular(Number(quantidade.value));
-        }
-    });
-
-    function formatarCep(valor){
-        const numeros = String(valor || "").replace(/\D/g,"").slice(0,8);
-        if(numeros.length > 5){
-            return numeros.slice(0,5) + "-" + numeros.slice(5);
-        }
-        return numeros;
-    }
-
-    function mostrarStatus(tipo,mensagem){
-        statusFrete.className = "status-frete " + tipo;
-        statusFrete.textContent = mensagem;
-    }
-
-    function limparStatus(){
-        statusFrete.className = "status-frete";
-        statusFrete.textContent = "";
-    }
-
-    function limparOpcoesFrete(){
-        opcoesFrete.innerHTML = "";
-        frete.value = "";
-        servicoFreteSelecionado = "";
-        prazoFreteSelecionado = null;
-        calcular(Number(quantidade.value));
-    }
-
-    function selecionarFrete(botao,opcao){
-        document.querySelectorAll(".opcao-frete").forEach(function(item){
-            item.classList.remove("ativa");
-        });
-
-        botao.classList.add("ativa");
-        frete.value = Number(opcao.valor).toFixed(2).replace(".",",");
-        servicoFreteSelecionado = opcao.nome || opcao.servico || "Frete";
-        prazoFreteSelecionado =
-            Number.isFinite(Number(opcao.prazoDias))
-                ? Number(opcao.prazoDias)
-                : null;
-
-        mostrarStatus(
-            "sucesso",
-            servicoFreteSelecionado + " selecionado: " + moeda(Number(opcao.valor))
-        );
-
-        calcular(Number(quantidade.value));
-    }
-
-    function exibirOpcoesFrete(opcoes){
-        opcoesFrete.innerHTML = "";
-
-        opcoes.forEach(function(opcao){
-            const botao = document.createElement("button");
-            botao.type = "button";
-            botao.className = "opcao-frete";
-
-            const prazo =
-                Number.isFinite(Number(opcao.prazoDias))
-                    ? Number(opcao.prazoDias) + " dia(s) útil(eis)"
-                    : "Prazo não informado";
-
-            botao.innerHTML =
-                '<span class="opcao-frete-topo">' +
-                    '<span class="opcao-frete-nome">' +
-                        (opcao.nome || opcao.servico || "Frete") +
-                    '</span>' +
-                    '<span class="opcao-frete-valor">' +
-                        moeda(Number(opcao.valor)) +
-                    '</span>' +
-                '</span>' +
-                '<span class="opcao-frete-prazo">' + prazo + '</span>';
-
-            botao.addEventListener("click",function(){
-                selecionarFrete(botao,opcao);
-            });
-
-            opcoesFrete.appendChild(botao);
-        });
-    }
-
-    async function consultarFrete(){
-        const cep = cepDestino.value.replace(/\D/g,"");
-
-        if(cep.length !== 8){
-            mostrarStatus("erro","Digite um CEP válido com 8 números.");
-            cepDestino.focus();
-            return;
-        }
-
-        if(valorProdutoAtual <= 0){
-            mostrarStatus("erro","Digite primeiro o nome da luminária.");
-            nome.focus();
-            return;
-        }
-
-        limparOpcoesFrete();
-        mostrarStatus(
-            "carregando",
-            "Consultando a Manda Bem. Na primeira consulta, aguarde até cerca de 50 segundos..."
-        );
-
-        btnFrete.disabled = true;
-        btnFrete.textContent = "Consultando...";
-
-        try{
-            const resposta = await fetch(API_FRETE_URL,{
-                method:"POST",
-                headers:{
-                    "Content-Type":"application/json"
-                },
-                body:JSON.stringify({
-                    cepDestino:cep,
-                    valorSeguro:valorProdutoAtual.toFixed(2)
-                })
-            });
-
-            let dados;
-            try{
-                dados = await resposta.json();
-            }catch{
-                throw new Error("O servidor respondeu em formato inesperado.");
-            }
-
-            if(!resposta.ok || !dados.sucesso){
-                throw new Error(
-                    dados.erro || "Não foi possível calcular o frete."
-                );
-            }
-
-            if(!Array.isArray(dados.opcoes) || dados.opcoes.length === 0){
-                throw new Error("Nenhuma opção de frete foi encontrada.");
-            }
-
-            exibirOpcoesFrete(dados.opcoes);
-            mostrarStatus(
-                "sucesso",
-                "Escolha uma das opções abaixo para somar o frete ao total."
-            );
-        }catch(erro){
-            mostrarStatus(
-                "erro",
-                erro.message +
-                " Confira o CEP e tente novamente. Se for a primeira consulta, aguarde um pouco."
-            );
-        }finally{
-            btnFrete.disabled = false;
-            btnFrete.textContent = "🚚 Consultar frete";
-        }
-    }
-
-    cepDestino.addEventListener("input",function(){
-        cepDestino.value = formatarCep(cepDestino.value);
-        limparStatus();
-        limparOpcoesFrete();
-    });
-
-    cepDestino.addEventListener("keydown",function(evento){
-        if(evento.key === "Enter"){
-            evento.preventDefault();
-            consultarFrete();
-        }
-    });
-
-    btnFrete.addEventListener("click",consultarFrete);
-
-    document.getElementById("btnCopiar").addEventListener("click",async function(){
-        const qtd = Number(quantidade.value) || 0;
-        const extras = Math.max(0,qtd - LIMITE_BASE);
-        const adicional = extras * VALOR_EXTRA;
-        const valorDoFrete = lerFrete();
-        const total = valorProdutoAtual + valorDoFrete;
-
-        const texto =
-`ORÇAMENTO LUMINÁRIA LED
-
-Cliente: ${cliente.value.trim() || "Não informado"}
-WhatsApp: ${telefone.value.trim() || "Não informado"}
-Cidade: ${cidade.value.trim() || "Não informada"}
-
-Nome da luminária: ${nome.value.trim() || "Não informado"}
-Cor: ${corSelecionada}
-Quantidade de letras: ${qtd}
-
-Preço base: ${qtd > 0 ? moeda(VALOR_BASE) : moeda(0)}
-Letras extras: ${extras}
-Adicional: ${moeda(adicional)}
-Frete: ${moeda(valorDoFrete)}${servicoFreteSelecionado ? " (" + servicoFreteSelecionado + ")" : ""}
-Prazo: ${prazoFreteSelecionado ? prazoFreteSelecionado + " dia(s) útil(eis)" : "Não informado"}
-TOTAL: ${moeda(total)}`;
-
-        try{
-            await navigator.clipboard.writeText(texto);
-            const mensagem = document.getElementById("mensagem");
-            mensagem.style.display = "block";
-            setTimeout(function(){
-                mensagem.style.display = "none";
-            },2500);
-        }catch{
-            alert("Não foi possível copiar automaticamente. Tente abrir pelo navegador Chrome ou Edge.");
-        }
-    });
-
-    document.getElementById("btnLimpar").addEventListener("click",function(){
-        cliente.value = "";
-        telefone.value = "";
-        cidade.value = "";
-        nome.value = "";
-        quantidade.value = "";
-        frete.value = "";
-        cepDestino.value = "";
-        opcoesFrete.innerHTML = "";
-        limparStatus();
-        servicoFreteSelecionado = "";
-        prazoFreteSelecionado = null;
-
-        corSelecionada = "Transparente";
-        valorProdutoAtual = 0;
-
-        document.querySelectorAll(".cor-opcao").forEach(function(item){
-            item.classList.remove("ativa");
-        });
-
-        document.querySelector('[data-cor="Transparente"]').classList.add("ativa");
-        atualizarResumo(0,0,0);
-        cliente.focus();
-    });
-})();
-</script>
-
-<script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("service-worker.js")
-      .then(() => console.log("PWA instalado com sucesso!"))
-      .catch((erro) => console.error("Erro ao registrar:", erro));
-  });
-}
-</script>
-
+  <script src="js/app.js"></script>
 </body>
 </html>
