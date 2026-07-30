@@ -368,11 +368,57 @@ TOTAL: ${moeda(total)}`;
 
   atualizarResumo(0, 0, 0);
 
-  if ("serviceWorker" in navigator) {
+// ===============================
+// VERSÃO 4.1 - MÚLTIPLAS LUMINÁRIAS
+// ===============================
+
+let contadorLuminarias = 1;
+
+const btnAdicionar =
+    document.getElementById("btnAdicionarLuminaria");
+
+const listaLuminarias =
+    document.getElementById("listaLuminarias");
+
+if (btnAdicionar && listaLuminarias) {
+
+    btnAdicionar.addEventListener(
+        "click",
+        adicionarLuminaria
+    );
+
+}
+
+function adicionarLuminaria() {
+
+    contadorLuminarias++;
+
+    const card = document.createElement("div");
+
+    card.className = "card-luminaria";
+
+    card.innerHTML = `
+        <h3>📦 Luminária ${contadorLuminarias}</h3>
+
+        <label>Nome da luminária</label>
+
+        <input
+            type="text"
+            class="nome-luminaria-extra"
+            placeholder="Digite o nome"
+            maxlength="25"
+        >
+    `;
+
+    listaLuminarias.appendChild(card);
+}
+
+if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker
-        .register("service-worker.js")
-        .catch((erro) => console.error("Erro ao registrar Service Worker:", erro));
+        navigator.serviceWorker
+            .register("service-worker.js")
+            .catch((erro) => console.error("Erro ao registrar Service Worker:", erro));
     });
-  }
+}
+
 })();
