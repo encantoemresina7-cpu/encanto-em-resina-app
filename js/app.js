@@ -408,11 +408,35 @@ function adicionarLuminaria() {
             placeholder="Digite o nome"
             maxlength="25"
         >
+
+        <div class="resumo-extra">
+            <p>🔤 Letras: <strong class="letras-extra">0</strong></p>
+            <p>💰 Valor: <strong class="valor-extra">R$ 0,00</strong></p>
+        </div>
     `;
 
     listaLuminarias.appendChild(card);
-}
 
+    const campoNome = card.querySelector(".nome-luminaria-extra");
+    const letrasExtra = card.querySelector(".letras-extra");
+    const valorExtra = card.querySelector(".valor-extra");
+
+    campoNome.addEventListener("input", () => {
+
+        const qtdLetras = contarLetras(campoNome.value);
+
+        const extras = Math.max(0, qtdLetras - LIMITE_BASE);
+
+        const valor = qtdLetras > 0
+            ? VALOR_BASE + extras * VALOR_EXTRA
+            : 0;
+
+        letrasExtra.textContent = qtdLetras;
+        valorExtra.textContent = moeda(valor);
+
+    });
+
+}
 if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
         navigator.serviceWorker
