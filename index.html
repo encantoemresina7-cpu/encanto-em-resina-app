@@ -3,143 +3,144 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aurora Luminárias - Sistema de Orçamentos</title>
-  <meta name="theme-color" content="#ff9800">
-
+  <title>Orçamento da Luminária | Encanto em Resina</title>
+  <meta name="theme-color" content="#a81245">
+  <meta name="description" content="Sistema de orçamentos da Encanto em Resina">
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="favicon.png">
+  <link rel="icon" href="icon-192.png">
   <link rel="apple-touch-icon" href="icon-192.png">
-
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Aurora PRO">
-
-  <link rel="stylesheet" href="css/style.css">
+  <meta name="apple-mobile-web-app-title" content="Orçamento da Luminária">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main class="app">
-    <header class="cabecalho">
-      <div class="logo">💡</div>
-      <h1>Aurora Luminárias</h1>
-      <div class="versao">Sistema de Orçamentos • Versão 4.2</div>
+    <header class="topo">
+      <div class="titulo-app">
+        <div class="icone-calculadora">🧮</div>
+        <div>
+          <h1>Orçamento da Luminária</h1>
+          <p>Sistema de Orçamentos</p>
+        </div>
+      </div>
+
+      <div class="marca">
+        <img src="logo-encanto.jpeg" alt="Logo Encanto em Resina">
+      </div>
     </header>
 
-    <section class="card">
-      <h2>👤 Dados do cliente</h2>
+    <div class="layout">
+      <div class="coluna-principal">
+        <section class="card">
+          <h2>👤 Dados do cliente</h2>
+          <label for="cliente">Nome do cliente</label>
+          <input type="text" id="cliente" placeholder="Digite o nome do cliente">
+        </section>
 
-      <label for="cliente">Cliente</label>
-      <input type="text" id="cliente" placeholder="Nome do cliente">
+        <section class="card">
+          <div class="cabecalho-secao">
+            <h2>💡 Luminárias do orçamento</h2>
+            <button type="button" class="btn btn-claro" id="btnAdicionar">＋ Adicionar luminária</button>
+          </div>
 
-      <label for="telefone">WhatsApp</label>
-      <input type="text" id="telefone" placeholder="(00) 00000-0000">
+          <div id="listaLuminarias"></div>
+        </section>
 
-      <label for="cidade">Cidade</label>
-      <input type="text" id="cidade" placeholder="Cidade">
-    </section>
+        <section class="card">
+          <h2>🚚 Frete</h2>
+          <div class="grade-frete">
+            <div>
+              <label for="cepDestino">CEP de destino</label>
+              <input type="text" inputmode="numeric" id="cepDestino" maxlength="9" placeholder="00000-000">
+            </div>
 
-    <section class="card">
-      <div class="titulo-com-contador">
-        <h2>💡 Luminárias do orçamento</h2>
-        <span class="contador" id="contadorLuminarias">1</span>
+            <div class="acao-frete">
+              <button type="button" class="btn btn-principal" id="btnFrete">🔎 Calcular frete</button>
+            </div>
+
+            <div>
+              <label for="frete">Valor do frete</label>
+              <input type="text" id="frete" value="0,00" readonly>
+            </div>
+          </div>
+
+          <div class="status-frete" id="statusFrete"></div>
+          <div class="opcoes-frete" id="opcoesFrete"></div>
+        </section>
       </div>
 
-      <div id="listaLuminarias"></div>
+      <aside class="card resumo">
+        <h2>📋 Resumo do orçamento</h2>
 
-      <button type="button" class="btn-adicionar" id="btnAdicionar">
-        ➕ Adicionar luminária
-      </button>
+        <div class="resumo-linha"><span>Total de luminárias</span><strong id="resLuminarias">1</strong></div>
+        <div class="resumo-linha"><span>Dimensões da embalagem</span><strong id="resEmbalagem">8 × 10 × 30 cm</strong></div>
+        <div class="resumo-linha"><span>Subtotal</span><strong id="resSubtotal">R$ 0,00</strong></div>
+        <div class="resumo-linha"><span>Frete</span><strong id="resFrete">R$ 0,00</strong></div>
 
-      <div class="medidas" id="medidasEmbalagem">
-        Embalagem: 8 × 10 × 30 cm
-      </div>
-    </section>
+        <div class="total">
+          <span>Total geral</span>
+          <strong id="resTotal">R$ 0,00</strong>
+        </div>
 
-    <section class="card">
-      <h2>🚚 Calcular frete automaticamente</h2>
+        <div class="itens-resumo" id="resItens"></div>
 
-      <label for="cepDestino">CEP do cliente</label>
-      <input
-        type="text"
-        inputmode="numeric"
-        id="cepDestino"
-        maxlength="9"
-        placeholder="00000-000"
-        autocomplete="postal-code"
-      >
+        <button type="button" class="btn btn-principal btn-largo" id="btnCopiar">📋 Copiar orçamento</button>
+        <button type="button" class="btn btn-whatsapp btn-largo" id="btnWhatsapp">💬 Enviar pelo WhatsApp</button>
+        <button type="button" class="btn btn-secundario btn-largo" id="btnLimpar">🧹 Novo orçamento</button>
 
-      <button type="button" class="btn-frete" id="btnFrete">
-        🚚 Consultar frete
-      </button>
+        <p class="validade">🛡️ Orçamento válido por 7 dias</p>
+        <div class="mensagem" id="mensagem">Orçamento copiado!</div>
+      </aside>
+    </div>
 
-      <div class="status-frete" id="statusFrete"></div>
-      <div class="opcoes-frete" id="opcoesFrete"></div>
-
-      <p class="dica-frete">
-        A primeira consulta pode demorar até cerca de 50 segundos porque o servidor gratuito pode estar em repouso.
-      </p>
-
-      <label for="frete">Frete selecionado</label>
-      <input type="text" inputmode="decimal" id="frete" placeholder="0,00" readonly>
-    </section>
-
-    <section class="card">
-      <h2>📋 Resumo do orçamento</h2>
-
-      <div class="resumo-linha"><span>Cliente:</span><strong id="resCliente">—</strong></div>
-      <div class="resumo-linha"><span>Quantidade:</span><strong id="resLuminarias">1 luminária</strong></div>
-      <div class="resumo-linha"><span>Embalagem:</span><strong id="resEmbalagem">8 × 10 × 30 cm</strong></div>
-
-      <div class="resumo-itens" id="resItens"></div>
-
-      <div class="resumo-linha subtotal">
-        <span>Subtotal das luminárias:</span>
-        <strong id="resSubtotal">R$ 0,00</strong>
-      </div>
-      <div class="resumo-linha"><span>Frete:</span><strong id="resFrete">R$ 0,00</strong></div>
-
-      <div class="resumo-linha total">
-        <span>Total:</span>
-        <strong id="resTotal">R$ 0,00</strong>
-      </div>
-
-      <button type="button" class="btn-copiar" id="btnCopiar">📋 Copiar orçamento</button>
-      <button type="button" class="btn-limpar" id="btnLimpar">🧹 Novo orçamento</button>
-
-      <div class="mensagem" id="mensagem">Orçamento copiado!</div>
-    </section>
+    <footer>Encanto em Resina • A arte de eternizar momentos</footer>
   </main>
 
   <template id="modeloLuminaria">
     <article class="luminaria-card">
-      <div class="luminaria-cabecalho">
-        <h3>Luminária <span class="numero-luminaria"></span></h3>
-        <button type="button" class="btn-remover" aria-label="Remover luminária">🗑 Remover</button>
+      <div class="numero-luminaria"></div>
+
+      <div class="campo">
+        <label>Nome da luminária</label>
+        <input type="text" class="nome-luminaria" placeholder="Ex.: Alice" maxlength="25">
       </div>
 
-      <label>Nome da luminária</label>
-      <input type="text" class="nome-luminaria" placeholder="Exemplo: Aurora" maxlength="25">
-
-      <label>Quantidade de letras</label>
-      <input type="number" class="quantidade-letras" min="1" max="25" placeholder="Automático">
-
-      <label>🎨 Cor da luminária</label>
-      <div class="cores">
-        <button type="button" class="cor-opcao ativa" data-cor="Transparente">🤍 Transparente</button>
-        <button type="button" class="cor-opcao" data-cor="Rosa">🩷 Rosa</button>
-        <button type="button" class="cor-opcao" data-cor="Azul">💙 Azul</button>
-        <button type="button" class="cor-opcao" data-cor="Verde">💚 Verde</button>
-        <button type="button" class="cor-opcao" data-cor="Lilás">💜 Lilás</button>
-        <button type="button" class="cor-opcao" data-cor="Dourada">💛 Dourada</button>
-        <button type="button" class="cor-opcao" data-cor="Vermelha">❤️ Vermelha</button>
+      <div class="campo campo-qtd">
+        <label>Quantidade de letras</label>
+        <input type="number" class="quantidade-letras" min="1" max="25" placeholder="0">
+        <small>Limite base: 5 letras</small>
       </div>
 
-      <div class="valor-luminaria">
-        <span>Valor desta luminária</span>
+      <div class="campo campo-cores">
+        <label>Cor da luminária</label>
+        <div class="cores">
+          <button type="button" class="cor-opcao ativa" data-cor="Transparente" aria-label="Transparente"><span class="bolinha transparente"></span><small>Transparente</small></button>
+          <button type="button" class="cor-opcao" data-cor="Dourada" aria-label="Dourada"><span class="bolinha dourada"></span><small>Dourada</small></button>
+          <button type="button" class="cor-opcao" data-cor="Azul" aria-label="Azul"><span class="bolinha azul"></span><small>Azul</small></button>
+          <button type="button" class="cor-opcao" data-cor="Rosa" aria-label="Rosa"><span class="bolinha rosa"></span><small>Rosa</small></button>
+          <button type="button" class="cor-opcao" data-cor="Vermelha" aria-label="Vermelha"><span class="bolinha vermelha"></span><small>Vermelha</small></button>
+          <button type="button" class="cor-opcao" data-cor="Verde" aria-label="Verde"><span class="bolinha verde"></span><small>Verde</small></button>
+          <button type="button" class="cor-opcao" data-cor="Lilás" aria-label="Lilás"><span class="bolinha lilas"></span><small>Lilás</small></button>
+        </div>
+      </div>
+
+      <button type="button" class="btn-remover" aria-label="Remover luminária">🗑️</button>
+
+      <div class="previa">
+        <span>Prévia da luminária</span>
+        <div class="nome-previa">ALICE</div>
+        <div class="base-previa"></div>
+      </div>
+
+      <div class="preco">
+        <span>Valor da luminária</span>
         <strong class="valor-item">R$ 0,00</strong>
+        <small>Até 5 letras: R$ 89,99<br>Acima de 5: + R$ 5,00 por letra</small>
       </div>
     </article>
   </template>
 
-  <script src="js/app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
