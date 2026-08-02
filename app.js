@@ -20,7 +20,10 @@
   let prazoFreteSelecionado = null;
 
   function moeda(valor) {
-    return Number(valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    return Number(valor || 0).toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL"
+    });
   }
 
   function contarLetras(texto) {
@@ -33,38 +36,70 @@
 
   function formatarCep(valor) {
     const numeros = String(valor || "").replace(/\D/g, "").slice(0, 8);
-    return numeros.length > 5 ? numeros.slice(0, 5) + "-" + numeros.slice(5) : numeros;
+    return numeros.length > 5
+      ? numeros.slice(0, 5) + "-" + numeros.slice(5)
+      : numeros;
   }
 
   function lerFrete() {
     const numero = Number(frete.value.trim().replace(/\./g, "").replace(",", "."));
     return Number.isFinite(numero) && numero >= 0 ? numero : 0;
   }
-function calcularValor(qtdLetras) {
-  if (!Number.isInteger(qtdLetras) || qtdLetras <= 0) {
-    return { extras: 0, adicional: 0, valor: 0 };
+
+  function calcularValor(qtdLetras) {
+    if (!Number.isInteger(qtdLetras) || qtdLetras <= 0) {
+      return {
+        extras: 0,
+        adicional: 0,
+        valor: 0,
+        detalhes: []
+      };
+    }
+
+    const detalhes = [];
+    let adicional = 0;
+
+    for (let posicao = 6; posicao <= qtdLetras; posicao += 1) {
+      let valorLetra;
+
+      if (posicao <= 7) {
+        valorLetra = 5;
+      } else if (posicao <= 9) {
+        valorLetra = 7;
+      } else if (posicao === 10) {
+        valorLetra = 9;
+      } else {
+        valorLetra = 10;
+      }
+
+      adicional += valorLetra;
+      detalhes.push({
+        posicao,
+        valor: valorLetra
+      });
+    }
+
+    return {
+      extras: Math.max(0, qtdLetras - LIMITE_BASE),
+      adicional,
+      valor: VALOR_BASE + adicional,
+      detalhes
+    };
   }
 
-  const extras = Math.max(0, qtdLetras - LIMITE_BASE);
-  let adicional = 0;
-
-  if (qtdLetras >= 6) adicional += 5;
-  if (qtdLetras >= 7) adicional += 5;
-  if (qtdLetras >= 8) adicional += 7;
-  if (qtdLetras >= 9) adicional += 7;
-  if (qtdLetras >= 10) adicional += 9;
-
-  if (qtdLetras > 10) {
-    adicional += (qtdLetras - 10) * 10;
+  function tamanhoBase(qtdLetras) {
+    if (qtdLetras <= 0) return "—";
+    if (qtdLetras <= 5) return "25 cm";
+    if (qtdLetras <= 9) return "30 cm";
+    return "35 cm";
   }
 
-  return {
-    extras,
-    adicional,
-    valor: VALOR_BASE + adicional
-  };
-}
-
+  function classeCor(cor) {
+    return "cor-" + String(cor || "Transparente")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
 
   function obterCards() {
     return [...listaLuminarias.querySelectorAll(".luminaria-card")];
@@ -73,13 +108,15 @@ function calcularValor(qtdLetras) {
   function obterItens() {
     return obterCards().map((card, indice) => {
       const nomeInput = card.querySelector(".nome-luminaria");
-      const quantidadeInput = card.querySelector(".quantidade-letras");
-      const qtd = Number(quantidadeInput.value) || 0;
+      const nome = nomeInput.value.trim();
+      const qtd = contarLetras(nome);
+
       return {
         numero: indice + 1,
-        nome: nomeInput.value.trim(),
+        nome,
         cor: card.dataset.cor || "Transparente",
         qtd,
+        base: tamanhoBase(qtd),
         ...calcularValor(qtd)
       };
     });
@@ -93,7 +130,12 @@ function calcularValor(qtdLetras) {
       3: { altura: 24, largura: 30, comprimento: 30 },
       4: { altura: 16, largura: 20, comprimento: 30 }
     };
-    return tabela[qtd] || { altura: Math.min(50, 8 * Math.ceil(qtd / 2)), largura: 20, comprimento: 30 };
+
+    return tabela[qtd] || {
+      altura: Math.min(50, 8 * Math.ceil(qtd / 2)),
+      largura: 20,
+      comprimento: 30
+    };
   }
 
   function textoDimensoes() {
@@ -125,10 +167,27 @@ function calcularValor(qtdLetras) {
 
   function atualizarNumeracao() {
     const cards = obterCards();
+
     cards.forEach((card, indice) => {
       card.querySelector(".numero-luminaria").textContent = String(indice + 1);
       card.querySelector(".btn-remover").hidden = cards.length === 1;
     });
+  }
+
+  function textoDetalhamento(calculo) {
+    if (!calculo.detalhes.length) {
+      return `<small>Até 5 letras: ${moeda(VALOR_BASE)}</small>`;
+    }
+
+    const linhas = calculo.detalhes.map((item) =>
+      `<small>${item.posicao}ª letra: + ${moeda(item.valor)}</small>`
+    ).join("");
+
+    return `
+      <small>Preço base: ${moeda(VALOR_BASE)}</small>
+      ${linhas}
+      <small class="adicional">Adicional: ${moeda(calculo.adicional)}</small>
+    `;
   }
 
   function atualizarResumo() {
@@ -149,16 +208,34 @@ function calcularValor(qtdLetras) {
           <strong>${item.numero}. ${item.nome || "Nome não informado"}</strong>
           <strong>${moeda(item.valor)}</strong>
         </div>
-        <small>${item.cor} • ${item.qtd} ${item.qtd === 1 ? "letra" : "letras"}</small>
+        <small>${item.cor} • ${item.qtd} ${item.qtd === 1 ? "letra" : "letras"} • Base ${item.base}</small>
       </div>
     `).join("");
   }
 
   function atualizarCard(card) {
-    const qtd = Number(card.querySelector(".quantidade-letras").value) || 0;
-    const nome = card.querySelector(".nome-luminaria").value.trim() || "Alice";
-    card.querySelector(".valor-item").textContent = moeda(calcularValor(qtd).valor);
-    card.querySelector(".nome-previa").textContent = nome;
+    const nomeInput = card.querySelector(".nome-luminaria");
+    const nome = nomeInput.value.trim();
+    const qtd = contarLetras(nome);
+    const calculo = calcularValor(qtd);
+    const previa = card.querySelector(".nome-previa");
+
+    card.querySelector(".quantidade-info").textContent = String(qtd);
+    card.querySelector(".base-info").textContent = tamanhoBase(qtd);
+    card.querySelector(".valor-item").textContent = moeda(calculo.valor);
+    card.querySelector(".detalhamento").innerHTML = textoDetalhamento(calculo);
+
+    previa.textContent = nome ? nome.toUpperCase() : "SEU NOME";
+    previa.className = `nome-previa ${classeCor(card.dataset.cor)}`;
+
+    if (qtd >= 11) {
+      previa.style.fontSize = "clamp(24px, 4vw, 42px)";
+    } else if (qtd >= 8) {
+      previa.style.fontSize = "clamp(28px, 5vw, 50px)";
+    } else {
+      previa.style.fontSize = "clamp(34px, 6vw, 62px)";
+    }
+
     atualizarResumo();
   }
 
@@ -166,17 +243,14 @@ function calcularValor(qtdLetras) {
     const fragmento = modeloLuminaria.content.cloneNode(true);
     const card = fragmento.querySelector(".luminaria-card");
     const nomeInput = card.querySelector(".nome-luminaria");
-    const quantidadeInput = card.querySelector(".quantidade-letras");
 
     card.dataset.id = String(proximoId++);
     card.dataset.cor = dados.cor || "Transparente";
     nomeInput.value = dados.nome || "";
 
-    const qtdInicial = dados.qtd || contarLetras(nomeInput.value);
-    quantidadeInput.value = qtdInicial > 0 ? String(qtdInicial) : "";
-
     card.querySelectorAll(".cor-opcao").forEach((botao) => {
       botao.classList.toggle("ativa", botao.dataset.cor === card.dataset.cor);
+
       botao.addEventListener("click", () => {
         card.querySelectorAll(".cor-opcao").forEach((item) => item.classList.remove("ativa"));
         botao.classList.add("ativa");
@@ -187,13 +261,6 @@ function calcularValor(qtdLetras) {
     });
 
     nomeInput.addEventListener("input", () => {
-      const qtd = contarLetras(nomeInput.value);
-      quantidadeInput.value = qtd > 0 ? String(qtd) : "";
-      invalidarFrete();
-      atualizarCard(card);
-    });
-
-    quantidadeInput.addEventListener("input", () => {
       invalidarFrete();
       atualizarCard(card);
     });
@@ -214,20 +281,33 @@ function calcularValor(qtdLetras) {
   function selecionarFrete(botao, opcao) {
     document.querySelectorAll(".opcao-frete").forEach((item) => item.classList.remove("ativa"));
     botao.classList.add("ativa");
+
     frete.value = Number(opcao.valor).toFixed(2).replace(".", ",");
     servicoFreteSelecionado = opcao.nome || opcao.servico || "Frete";
-    prazoFreteSelecionado = Number.isFinite(Number(opcao.prazoDias)) ? Number(opcao.prazoDias) : null;
-    mostrarStatus("sucesso", `${servicoFreteSelecionado} selecionado: ${moeda(Number(opcao.valor))}`);
+    prazoFreteSelecionado = Number.isFinite(Number(opcao.prazoDias))
+      ? Number(opcao.prazoDias)
+      : null;
+
+    mostrarStatus(
+      "sucesso",
+      `${servicoFreteSelecionado} selecionado: ${moeda(Number(opcao.valor))}`
+    );
+
     atualizarResumo();
   }
 
   function exibirOpcoesFrete(opcoes) {
     opcoesFrete.innerHTML = "";
+
     opcoes.forEach((opcao) => {
       const botao = document.createElement("button");
       botao.type = "button";
       botao.className = "opcao-frete";
-      const prazo = Number.isFinite(Number(opcao.prazoDias)) ? `${Number(opcao.prazoDias)} dia(s) útil(eis)` : "Prazo não informado";
+
+      const prazo = Number.isFinite(Number(opcao.prazoDias))
+        ? `${Number(opcao.prazoDias)} dia(s) útil(eis)`
+        : "Prazo não informado";
+
       botao.innerHTML = `
         <span class="opcao-frete-topo">
           <span>${opcao.nome || opcao.servico || "Frete"}</span>
@@ -235,6 +315,7 @@ function calcularValor(qtdLetras) {
         </span>
         <span class="opcao-frete-prazo">${prazo}</span>
       `;
+
       botao.addEventListener("click", () => selecionarFrete(botao, opcao));
       opcoesFrete.appendChild(botao);
     });
@@ -279,8 +360,13 @@ function calcularValor(qtdLetras) {
 
       const dados = await resposta.json();
 
-      if (!resposta.ok || !dados.sucesso) throw new Error(dados.erro || "Não foi possível calcular o frete.");
-      if (!Array.isArray(dados.opcoes) || dados.opcoes.length === 0) throw new Error("Nenhuma opção de frete foi encontrada.");
+      if (!resposta.ok || !dados.sucesso) {
+        throw new Error(dados.erro || "Não foi possível calcular o frete.");
+      }
+
+      if (!Array.isArray(dados.opcoes) || dados.opcoes.length === 0) {
+        throw new Error("Nenhuma opção de frete foi encontrada.");
+      }
 
       exibirOpcoesFrete(dados.opcoes);
       mostrarStatus("sucesso", "Escolha uma opção de entrega para somar o frete ao total.");
@@ -298,11 +384,21 @@ function calcularValor(qtdLetras) {
     const valorDoFrete = lerFrete();
     const total = subtotal + valorDoFrete;
 
-    const listaTexto = itens.map((item) => `
+    const listaTexto = itens.map((item) => {
+      const detalhes = item.detalhes.length
+        ? item.detalhes.map((linha) => `${linha.posicao}ª letra: + ${moeda(linha.valor)}`).join("\n")
+        : "Sem letras adicionais.";
+
+      return `
 ${item.numero}️⃣ ${item.nome || "Nome não informado"}
 Cor: ${item.cor}
 Quantidade de letras: ${item.qtd}
-Valor da luminária: ${moeda(item.valor)}`).join("\n");
+Tamanho da base: ${item.base}
+Preço base: ${moeda(item.qtd > 0 ? VALOR_BASE : 0)}
+${detalhes}
+Adicional: ${moeda(item.adicional)}
+Valor da luminária: ${moeda(item.valor)}`;
+    }).join("\n");
 
     return `ORÇAMENTO DA LUMINÁRIA — ENCANTO EM RESINA
 
@@ -317,7 +413,7 @@ Frete: ${moeda(valorDoFrete)}${servicoFreteSelecionado ? ` (${servicoFreteSeleci
 Prazo do frete: ${prazoFreteSelecionado ? `${prazoFreteSelecionado} dia(s) útil(eis)` : "Não informado"}
 TOTAL: ${moeda(total)}
 
-Prazo de produção: 6 dias úteis.
+Prazo de produção: 6 dias úteis após a confirmação do pagamento.
 Orçamento válido por 7 dias.`;
   }
 
@@ -348,9 +444,11 @@ Orçamento válido por 7 dias.`;
     try {
       await navigator.clipboard.writeText(montarTexto());
       $("mensagem").style.display = "block";
-      setTimeout(() => { $("mensagem").style.display = "none"; }, 2500);
+      setTimeout(() => {
+        $("mensagem").style.display = "none";
+      }, 2500);
     } catch {
-      alert("Não foi possível copiar automaticamente. Tente abrir pelo Chrome ou Edge.");
+      prompt("Copie o orçamento:", montarTexto());
     }
   });
 
@@ -375,7 +473,7 @@ Orçamento válido por 7 dias.`;
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("service-worker.js").catch(console.error);
+      navigator.serviceWorker.register("./service-worker.js").catch(console.error);
     });
   }
 })();

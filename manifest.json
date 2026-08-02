@@ -1,25 +1,22 @@
 {
-  "name": "Encanto em Resina - Sistema de Orçamentos",
-  "short_name": "Encanto em Resina",
-  "description": "Calculadora de luminárias com orçamento e frete automático.",
+  "name": "Orçamento da Luminária - Encanto em Resina",
+  "short_name": "Orçamento",
+  "description": "Sistema de orçamentos da Encanto em Resina",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#ff9800",
-  "theme_color": "#ff9800",
-  "orientation": "portrait",
+  "background_color": "#fff2f6",
+  "theme_color": "#a81245",
   "icons": [
     {
       "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
   ]
 }

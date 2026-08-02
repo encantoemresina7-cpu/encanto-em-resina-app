@@ -17,16 +17,10 @@
 <body>
   <main class="app">
     <header class="topo">
-      <div class="titulo-app">
-        <div class="icone-calculadora">🧮</div>
-        <div>
-          <h1>Orçamento da Luminária</h1>
-          <p>Sistema de Orçamentos</p>
-        </div>
-      </div>
-
-      <div class="marca">
-        <img src="logo-encanto.jpeg" alt="Logo Encanto em Resina">
+      <div class="marca-icone">ER</div>
+      <div>
+        <h1>Orçamento da Luminária</h1>
+        <p>Encanto em Resina • Versão 5.0</p>
       </div>
     </header>
 
@@ -40,10 +34,12 @@
 
         <section class="card">
           <div class="cabecalho-secao">
-            <h2>💡 Luminárias do orçamento</h2>
+            <div>
+              <h2>💡 Luminárias do orçamento</h2>
+              <p class="ajuda">Digite apenas o nome. A quantidade de letras e o valor são calculados automaticamente.</p>
+            </div>
             <button type="button" class="btn btn-claro" id="btnAdicionar">＋ Adicionar luminária</button>
           </div>
-
           <div id="listaLuminarias"></div>
         </section>
 
@@ -54,11 +50,9 @@
               <label for="cepDestino">CEP de destino</label>
               <input type="text" inputmode="numeric" id="cepDestino" maxlength="9" placeholder="00000-000">
             </div>
-
             <div class="acao-frete">
               <button type="button" class="btn btn-principal" id="btnFrete">🔎 Calcular frete</button>
             </div>
-
             <div>
               <label for="frete">Valor do frete</label>
               <input type="text" id="frete" value="0,00" readonly>
@@ -103,40 +97,42 @@
 
       <div class="campo">
         <label>Nome da luminária</label>
-        <input type="text" class="nome-luminaria" placeholder="Ex.: Alice" maxlength="25">
+        <input type="text" class="nome-luminaria" placeholder="Ex.: Valentina" maxlength="25">
       </div>
 
-      <div class="campo campo-qtd">
-        <label>Quantidade de letras</label>
-        <input type="number" class="quantidade-letras" min="1" max="25" placeholder="0">
-        <small>Limite base: 5 letras</small>
+      <div class="dados-automaticos">
+        <div><span>🔤 Letras</span><strong class="quantidade-info">0</strong></div>
+        <div><span>📏 Base</span><strong class="base-info">—</strong></div>
       </div>
 
       <div class="campo campo-cores">
         <label>Cor da luminária</label>
         <div class="cores">
-          <button type="button" class="cor-opcao ativa" data-cor="Transparente" aria-label="Transparente"><span class="bolinha transparente"></span><small>Transparente</small></button>
-          <button type="button" class="cor-opcao" data-cor="Dourada" aria-label="Dourada"><span class="bolinha dourada"></span><small>Dourada</small></button>
-          <button type="button" class="cor-opcao" data-cor="Azul" aria-label="Azul"><span class="bolinha azul"></span><small>Azul</small></button>
-          <button type="button" class="cor-opcao" data-cor="Rosa" aria-label="Rosa"><span class="bolinha rosa"></span><small>Rosa</small></button>
-          <button type="button" class="cor-opcao" data-cor="Vermelha" aria-label="Vermelha"><span class="bolinha vermelha"></span><small>Vermelha</small></button>
-          <button type="button" class="cor-opcao" data-cor="Verde" aria-label="Verde"><span class="bolinha verde"></span><small>Verde</small></button>
-          <button type="button" class="cor-opcao" data-cor="Lilás" aria-label="Lilás"><span class="bolinha lilas"></span><small>Lilás</small></button>
+          <button type="button" class="cor-opcao ativa" data-cor="Transparente"><span class="bolinha transparente"></span><small>Transparente</small></button>
+          <button type="button" class="cor-opcao" data-cor="Dourada"><span class="bolinha dourada"></span><small>Dourada</small></button>
+          <button type="button" class="cor-opcao" data-cor="Azul"><span class="bolinha azul"></span><small>Azul</small></button>
+          <button type="button" class="cor-opcao" data-cor="Rosa"><span class="bolinha rosa"></span><small>Rosa</small></button>
+          <button type="button" class="cor-opcao" data-cor="Vermelha"><span class="bolinha vermelha"></span><small>Vermelha</small></button>
+          <button type="button" class="cor-opcao" data-cor="Verde"><span class="bolinha verde"></span><small>Verde</small></button>
+          <button type="button" class="cor-opcao" data-cor="Lilás"><span class="bolinha lilas"></span><small>Lilás</small></button>
         </div>
       </div>
 
       <button type="button" class="btn-remover" aria-label="Remover luminária">🗑️</button>
 
       <div class="previa">
-        <span>Prévia da luminária</span>
-        <div class="nome-previa">ALICE</div>
-        <div class="base-previa"></div>
+        <span>✨ Prévia da luminária</span>
+        <div class="cenario">
+          <div class="nome-previa cor-transparente">SEU NOME</div>
+          <div class="luz-base"></div>
+          <div class="base-previa">ENCANTO EM RESINA</div>
+        </div>
       </div>
 
       <div class="preco">
         <span>Valor da luminária</span>
         <strong class="valor-item">R$ 0,00</strong>
-        <small>Até 5 letras: R$ 89,99<br>Acima de 5: + R$ 5,00 por letra</small>
+        <div class="detalhamento"></div>
       </div>
     </article>
   </template>
