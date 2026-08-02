@@ -6,25 +6,24 @@
   const VALOR_EXTRA = 5;
   const API_FRETE_URL = "https://calculadora-aurora.onrender.com/calcular-frete";
 
-  let corSelecionada = "Transparente";
-  let valorProdutoAtual = 0;
-  let servicoFreteSelecionado = "";
-  let prazoFreteSelecionado = null;
-
   const $ = (id) => document.getElementById(id);
 
   const cliente = $("cliente");
   const telefone = $("telefone");
   const cidade = $("cidade");
-  const nome = $("nome");
-  const quantidade = $("quantidade");
-  const quantidadeLuminarias = $("quantidadeLuminarias");
+  const listaLuminarias = $("listaLuminarias");
+  const modeloLuminaria = $("modeloLuminaria");
+  const contadorLuminarias = $("contadorLuminarias");
   const medidasEmbalagem = $("medidasEmbalagem");
   const cepDestino = $("cepDestino");
   const frete = $("frete");
   const statusFrete = $("statusFrete");
   const opcoesFrete = $("opcoesFrete");
   const btnFrete = $("btnFrete");
+
+  let proximoId = 1;
+  let servicoFreteSelecionado = "";
+  let prazoFreteSelecionado = null;
 
   function moeda(valor) {
     return Number(valor || 0).toLocaleString("pt-BR", {
@@ -55,9 +54,39 @@
     return Number.isFinite(numero) && numero >= 0 ? numero : 0;
   }
 
-  function obterDimensoesEmbalagem() {
-    const qtd = Number(quantidadeLuminarias.value);
+  function calcularValor(qtdLetras) {
+    if (!Number.isInteger(qtdLetras) || qtdLetras <= 0) {
+      return { extras: 0, adicional: 0, valor: 0 };
+    }
 
+    const extras = Math.max(0, qtdLetras - LIMITE_BASE);
+    const adicional = extras * VALOR_EXTRA;
+    return { extras, adicional, valor: VALOR_BASE + adicional };
+  }
+
+  function obterCards() {
+    return [...listaLuminarias.querySelectorAll(".luminaria-card")];
+  }
+
+  function obterItens() {
+    return obterCards().map((card, indice) => {
+      const nomeInput = card.querySelector(".nome-luminaria");
+      const quantidadeInput = card.querySelector(".quantidade-letras");
+      const qtd = Number(quantidadeInput.value) || 0;
+      const calculo = calcularValor(qtd);
+
+      return {
+        numero: indice + 1,
+        nome: nomeInput.value.trim(),
+        cor: card.dataset.cor || "Transparente",
+        qtd,
+        ...calculo
+      };
+    });
+  }
+
+  function obterDimensoesEmbalagem() {
+    const qtd = Math.max(1, obterCards().length);
     const tabela = {
       1: { altura: 8, largura: 10, comprimento: 30 },
       2: { altura: 16, largura: 10, comprimento: 30 },
@@ -65,7 +94,13 @@
       4: { altura: 16, largura: 20, comprimento: 30 }
     };
 
-    return tabela[qtd] || tabela[1];
+    if (tabela[qtd]) return tabela[qtd];
+
+    return {
+      altura: Math.min(50, 8 * Math.ceil(qtd / 2)),
+      largura: 20,
+      comprimento: 30
+    };
   }
 
   function textoDimensoes() {
@@ -83,59 +118,109 @@
     statusFrete.textContent = "";
   }
 
-  function atualizarResumo(qtd, extras, adicional) {
-    const valorDoFrete = lerFrete();
-
-    $("resCliente").textContent = cliente.value.trim() || "—";
-    $("resNome").textContent = nome.value.trim() || "—";
-    $("resCor").textContent = corSelecionada;
-    $("resQuantidade").textContent = qtd + (qtd === 1 ? " letra" : " letras");
-    $("resLuminarias").textContent = quantidadeLuminarias.value;
-    $("resEmbalagem").textContent = textoDimensoes();
-    $("resBase").textContent = qtd > 0 ? moeda(VALOR_BASE) : moeda(0);
-    $("resExtras").textContent = String(extras);
-    $("resAdicional").textContent = moeda(adicional);
-    $("resFrete").textContent = moeda(valorDoFrete);
-    $("resTotal").textContent = moeda(valorProdutoAtual + valorDoFrete);
-
-    medidasEmbalagem.textContent = "Embalagem: " + textoDimensoes();
-  }
-
-  function calcular(qtd) {
-    const valido = Number.isInteger(qtd) && qtd > 0;
-
-    if (!valido) {
-      valorProdutoAtual = 0;
-      atualizarResumo(0, 0, 0);
-      return;
-    }
-
-    const extras = Math.max(0, qtd - LIMITE_BASE);
-    const adicional = extras * VALOR_EXTRA;
-    valorProdutoAtual = VALOR_BASE + adicional;
-
-    atualizarResumo(qtd, extras, adicional);
-  }
-
-  function calcularPeloNome() {
-    const qtd = contarLetras(nome.value);
-    quantidade.value = qtd > 0 ? String(qtd) : "";
-    calcular(qtd);
-  }
-
   function limparOpcoesFrete() {
     opcoesFrete.innerHTML = "";
     frete.value = "";
     servicoFreteSelecionado = "";
     prazoFreteSelecionado = null;
-    calcular(Number(quantidade.value));
+  }
+
+  function invalidarFrete() {
+    limparStatus();
+    limparOpcoesFrete();
+  }
+
+  function atualizarNumeracao() {
+    const cards = obterCards();
+    cards.forEach((card, indice) => {
+      card.querySelector(".numero-luminaria").textContent = String(indice + 1);
+      card.querySelector(".btn-remover").hidden = cards.length === 1;
+    });
+    contadorLuminarias.textContent = String(cards.length);
+  }
+
+  function atualizarResumo() {
+    const itens = obterItens();
+    const subtotal = itens.reduce((soma, item) => soma + item.valor, 0);
+    const valorDoFrete = lerFrete();
+    const total = subtotal + valorDoFrete;
+
+    $("resCliente").textContent = cliente.value.trim() || "—";
+    $("resLuminarias").textContent = `${itens.length} ${itens.length === 1 ? "luminária" : "luminárias"}`;
+    $("resEmbalagem").textContent = textoDimensoes();
+    $("resSubtotal").textContent = moeda(subtotal);
+    $("resFrete").textContent = moeda(valorDoFrete);
+    $("resTotal").textContent = moeda(total);
+    medidasEmbalagem.textContent = "Embalagem: " + textoDimensoes();
+
+    $("resItens").innerHTML = itens.map((item) => `
+      <div class="resumo-item">
+        <div>
+          <strong>${item.numero}. ${item.nome || "Nome não informado"}</strong>
+          <small>${item.cor} • ${item.qtd} ${item.qtd === 1 ? "letra" : "letras"}</small>
+        </div>
+        <strong>${moeda(item.valor)}</strong>
+      </div>
+    `).join("");
+  }
+
+  function atualizarCard(card) {
+    const qtd = Number(card.querySelector(".quantidade-letras").value) || 0;
+    card.querySelector(".valor-item").textContent = moeda(calcularValor(qtd).valor);
+    atualizarResumo();
+  }
+
+  function adicionarLuminaria(dados = {}) {
+    const fragmento = modeloLuminaria.content.cloneNode(true);
+    const card = fragmento.querySelector(".luminaria-card");
+    const nomeInput = card.querySelector(".nome-luminaria");
+    const quantidadeInput = card.querySelector(".quantidade-letras");
+
+    card.dataset.id = String(proximoId++);
+    card.dataset.cor = dados.cor || "Transparente";
+    nomeInput.value = dados.nome || "";
+
+    const qtdInicial = dados.qtd || contarLetras(nomeInput.value);
+    quantidadeInput.value = qtdInicial > 0 ? String(qtdInicial) : "";
+
+    card.querySelectorAll(".cor-opcao").forEach((botao) => {
+      botao.classList.toggle("ativa", botao.dataset.cor === card.dataset.cor);
+      botao.addEventListener("click", () => {
+        card.querySelectorAll(".cor-opcao").forEach((item) => item.classList.remove("ativa"));
+        botao.classList.add("ativa");
+        card.dataset.cor = botao.dataset.cor;
+        invalidarFrete();
+        atualizarCard(card);
+      });
+    });
+
+    nomeInput.addEventListener("input", () => {
+      const qtd = contarLetras(nomeInput.value);
+      quantidadeInput.value = qtd > 0 ? String(qtd) : "";
+      invalidarFrete();
+      atualizarCard(card);
+    });
+
+    quantidadeInput.addEventListener("input", () => {
+      invalidarFrete();
+      atualizarCard(card);
+    });
+
+    card.querySelector(".btn-remover").addEventListener("click", () => {
+      card.remove();
+      invalidarFrete();
+      atualizarNumeracao();
+      atualizarResumo();
+    });
+
+    listaLuminarias.appendChild(fragmento);
+    atualizarNumeracao();
+    atualizarCard(card);
+    return card;
   }
 
   function selecionarFrete(botao, opcao) {
-    document.querySelectorAll(".opcao-frete").forEach((item) => {
-      item.classList.remove("ativa");
-    });
-
+    document.querySelectorAll(".opcao-frete").forEach((item) => item.classList.remove("ativa"));
     botao.classList.add("ativa");
     frete.value = Number(opcao.valor).toFixed(2).replace(".", ",");
     servicoFreteSelecionado = opcao.nome || opcao.servico || "Frete";
@@ -143,22 +228,16 @@
       ? Number(opcao.prazoDias)
       : null;
 
-    mostrarStatus(
-      "sucesso",
-      `${servicoFreteSelecionado} selecionado: ${moeda(Number(opcao.valor))}`
-    );
-
-    calcular(Number(quantidade.value));
+    mostrarStatus("sucesso", `${servicoFreteSelecionado} selecionado: ${moeda(Number(opcao.valor))}`);
+    atualizarResumo();
   }
 
   function exibirOpcoesFrete(opcoes) {
     opcoesFrete.innerHTML = "";
-
     opcoes.forEach((opcao) => {
       const botao = document.createElement("button");
       botao.type = "button";
       botao.className = "opcao-frete";
-
       const prazo = Number.isFinite(Number(opcao.prazoDias))
         ? `${Number(opcao.prazoDias)} dia(s) útil(eis)`
         : "Prazo não informado";
@@ -170,7 +249,6 @@
         </span>
         <span class="opcao-frete-prazo">${prazo}</span>
       `;
-
       botao.addEventListener("click", () => selecionarFrete(botao, opcao));
       opcoesFrete.appendChild(botao);
     });
@@ -178,6 +256,8 @@
 
   async function consultarFrete() {
     const cep = cepDestino.value.replace(/\D/g, "");
+    const itens = obterItens();
+    const subtotal = itens.reduce((soma, item) => soma + item.valor, 0);
 
     if (cep.length !== 8) {
       mostrarStatus("erro", "Digite um CEP válido com 8 números.");
@@ -185,18 +265,13 @@
       return;
     }
 
-    if (valorProdutoAtual <= 0) {
-      mostrarStatus("erro", "Digite primeiro o nome da luminária.");
-      nome.focus();
+    if (subtotal <= 0 || itens.some((item) => item.qtd <= 0)) {
+      mostrarStatus("erro", "Preencha o nome de todas as luminárias antes de calcular o frete.");
       return;
     }
 
     limparOpcoesFrete();
-    mostrarStatus(
-      "carregando",
-      "Consultando a Manda Bem. Na primeira consulta, aguarde até cerca de 50 segundos..."
-    );
-
+    mostrarStatus("carregando", "Consultando a Manda Bem. Na primeira consulta, aguarde até cerca de 50 segundos...");
     btnFrete.disabled = true;
     btnFrete.textContent = "Consultando...";
 
@@ -208,8 +283,8 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           cepDestino: cep,
-          valorSeguro: valorProdutoAtual.toFixed(2),
-          quantidadeLuminarias: Number(quantidadeLuminarias.value),
+          valorSeguro: subtotal.toFixed(2),
+          quantidadeLuminarias: itens.length,
           altura: dimensoes.altura,
           largura: dimensoes.largura,
           comprimento: dimensoes.comprimento
@@ -226,71 +301,32 @@
       if (!resposta.ok || !dados.sucesso) {
         throw new Error(dados.erro || "Não foi possível calcular o frete.");
       }
-
       if (!Array.isArray(dados.opcoes) || dados.opcoes.length === 0) {
         throw new Error("Nenhuma opção de frete foi encontrada.");
       }
 
       exibirOpcoesFrete(dados.opcoes);
-      mostrarStatus(
-        "sucesso",
-        "Escolha uma das opções abaixo para somar o frete ao total."
-      );
+      mostrarStatus("sucesso", "Escolha uma das opções abaixo para somar o frete ao total.");
     } catch (erro) {
-      mostrarStatus(
-        "erro",
-        `${erro.message} Confira o CEP e tente novamente.`
-      );
+      mostrarStatus("erro", `${erro.message} Confira o CEP e tente novamente.`);
     } finally {
       btnFrete.disabled = false;
       btnFrete.textContent = "🚚 Consultar frete";
     }
   }
 
-  nome.addEventListener("input", calcularPeloNome);
-
-  quantidade.addEventListener("input", () => {
-    calcular(Number(quantidade.value));
+  $("btnAdicionar").addEventListener("click", () => {
+    invalidarFrete();
+    const card = adicionarLuminaria();
+    card.querySelector(".nome-luminaria").focus();
   });
 
-  cliente.addEventListener("input", () => {
-    calcular(Number(quantidade.value));
-  });
-
-  quantidadeLuminarias.addEventListener("change", () => {
-    limparStatus();
-    limparOpcoesFrete();
-    atualizarResumo(
-      Number(quantidade.value) || 0,
-      Math.max(0, (Number(quantidade.value) || 0) - LIMITE_BASE),
-      Math.max(0, (Number(quantidade.value) || 0) - LIMITE_BASE) * VALOR_EXTRA
-    );
-  });
-
-  document.querySelectorAll(".cor-opcao").forEach((botao) => {
-    botao.addEventListener("click", () => {
-      document.querySelectorAll(".cor-opcao").forEach((item) => {
-        item.classList.remove("ativa");
-      });
-
-      botao.classList.add("ativa");
-      corSelecionada = botao.dataset.cor;
-      calcular(Number(quantidade.value));
-    });
-  });
-
-  $("btnCalcular").addEventListener("click", () => {
-    if (nome.value.trim()) {
-      calcularPeloNome();
-    } else {
-      calcular(Number(quantidade.value));
-    }
-  });
+  cliente.addEventListener("input", atualizarResumo);
 
   cepDestino.addEventListener("input", () => {
     cepDestino.value = formatarCep(cepDestino.value);
-    limparStatus();
-    limparOpcoesFrete();
+    invalidarFrete();
+    atualizarResumo();
   });
 
   cepDestino.addEventListener("keydown", (evento) => {
@@ -303,28 +339,31 @@
   btnFrete.addEventListener("click", consultarFrete);
 
   $("btnCopiar").addEventListener("click", async () => {
-    const qtd = Number(quantidade.value) || 0;
-    const extras = Math.max(0, qtd - LIMITE_BASE);
-    const adicional = extras * VALOR_EXTRA;
+    const itens = obterItens();
+    const subtotal = itens.reduce((soma, item) => soma + item.valor, 0);
     const valorDoFrete = lerFrete();
-    const total = valorProdutoAtual + valorDoFrete;
-    const qtdLuminarias = Number(quantidadeLuminarias.value);
+    const total = subtotal + valorDoFrete;
 
-    const texto = `ORÇAMENTO LUMINÁRIA LED
+    const listaTexto = itens.map((item) => `
+${item.numero}️⃣ ${item.nome || "Nome não informado"}
+Cor: ${item.cor}
+Quantidade de letras: ${item.qtd}
+Preço base: ${item.qtd > 0 ? moeda(VALOR_BASE) : moeda(0)}
+Letras extras: ${item.extras}
+Adicional: ${moeda(item.adicional)}
+Valor da luminária: ${moeda(item.valor)}`).join("\n");
+
+    const texto = `ORÇAMENTO AURORA LUMINÁRIAS
 
 Cliente: ${cliente.value.trim() || "Não informado"}
 WhatsApp: ${telefone.value.trim() || "Não informado"}
 Cidade: ${cidade.value.trim() || "Não informada"}
 
-Nome da luminária: ${nome.value.trim() || "Não informado"}
-Cor: ${corSelecionada}
-Quantidade de letras: ${qtd}
-Quantidade de luminárias: ${qtdLuminarias}
-Embalagem: ${textoDimensoes()}
+${listaTexto}
 
-Preço base: ${qtd > 0 ? moeda(VALOR_BASE) : moeda(0)}
-Letras extras: ${extras}
-Adicional: ${moeda(adicional)}
+Quantidade de luminárias: ${itens.length}
+Embalagem: ${textoDimensoes()}
+Subtotal das luminárias: ${moeda(subtotal)}
 Frete: ${moeda(valorDoFrete)}${servicoFreteSelecionado ? ` (${servicoFreteSelecionado})` : ""}
 Prazo: ${prazoFreteSelecionado ? `${prazoFreteSelecionado} dia(s) útil(eis)` : "Não informado"}
 TOTAL: ${moeda(total)}`;
@@ -332,9 +371,7 @@ TOTAL: ${moeda(total)}`;
     try {
       await navigator.clipboard.writeText(texto);
       $("mensagem").style.display = "block";
-      setTimeout(() => {
-        $("mensagem").style.display = "none";
-      }, 2500);
+      setTimeout(() => { $("mensagem").style.display = "none"; }, 2500);
     } catch {
       alert("Não foi possível copiar automaticamente. Tente abrir pelo Chrome ou Edge.");
     }
@@ -344,105 +381,23 @@ TOTAL: ${moeda(total)}`;
     cliente.value = "";
     telefone.value = "";
     cidade.value = "";
-    nome.value = "";
-    quantidade.value = "";
-    quantidadeLuminarias.value = "1";
-    frete.value = "";
     cepDestino.value = "";
-    opcoesFrete.innerHTML = "";
-    limparStatus();
-
-    servicoFreteSelecionado = "";
-    prazoFreteSelecionado = null;
-    corSelecionada = "Transparente";
-    valorProdutoAtual = 0;
-
-    document.querySelectorAll(".cor-opcao").forEach((item) => {
-      item.classList.remove("ativa");
-    });
-
-    document.querySelector('[data-cor="Transparente"]').classList.add("ativa");
-    atualizarResumo(0, 0, 0);
+    listaLuminarias.innerHTML = "";
+    proximoId = 1;
+    invalidarFrete();
+    adicionarLuminaria();
+    atualizarResumo();
     cliente.focus();
   });
 
-  atualizarResumo(0, 0, 0);
+  adicionarLuminaria();
+  atualizarResumo();
 
-// ===============================
-// VERSÃO 4.1 - MÚLTIPLAS LUMINÁRIAS
-// ===============================
-
-let contadorLuminarias = 1;
-
-const btnAdicionar =
-    document.getElementById("btnAdicionarLuminaria");
-
-const listaLuminarias =
-    document.getElementById("listaLuminarias");
-
-if (btnAdicionar && listaLuminarias) {
-
-    btnAdicionar.addEventListener(
-        "click",
-        adicionarLuminaria
-    );
-
-}
-
-function adicionarLuminaria() {
-
-    contadorLuminarias++;
-
-    const card = document.createElement("div");
-
-    card.className = "card-luminaria";
-
-    card.innerHTML = `
-        <h3>📦 Luminária ${contadorLuminarias}</h3>
-
-        <label>Nome da luminária</label>
-
-        <input
-            type="text"
-            class="nome-luminaria-extra"
-            placeholder="Digite o nome"
-            maxlength="25"
-        >
-
-        <div class="resumo-extra">
-            <p>🔤 Letras: <strong class="letras-extra">0</strong></p>
-            <p>💰 Valor: <strong class="valor-extra">R$ 0,00</strong></p>
-        </div>
-    `;
-
-    listaLuminarias.appendChild(card);
-
-    const campoNome = card.querySelector(".nome-luminaria-extra");
-    const letrasExtra = card.querySelector(".letras-extra");
-    const valorExtra = card.querySelector(".valor-extra");
-
-    campoNome.addEventListener("input", () => {
-
-        const qtdLetras = contarLetras(campoNome.value);
-
-        const extras = Math.max(0, qtdLetras - LIMITE_BASE);
-
-        const valor = qtdLetras > 0
-            ? VALOR_BASE + extras * VALOR_EXTRA
-            : 0;
-
-        letrasExtra.textContent = qtdLetras;
-        valorExtra.textContent = moeda(valor);
-
-    });
-
-}
-if ("serviceWorker" in navigator) {
+  if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
-        navigator.serviceWorker
-            .register("service-worker.js")
-            .catch((erro) => console.error("Erro ao registrar Service Worker:", erro));
+      navigator.serviceWorker
+        .register("service-worker.js")
+        .catch((erro) => console.error("Erro ao registrar Service Worker:", erro));
     });
-}
-
+  }
 })();
