@@ -7,14 +7,9 @@
   const API_FRETE_URL = "https://calculadora-aurora.onrender.com/calcular-frete";
 
   const $ = (id) => document.getElementById(id);
-
   const cliente = $("cliente");
-  const telefone = $("telefone");
-  const cidade = $("cidade");
   const listaLuminarias = $("listaLuminarias");
   const modeloLuminaria = $("modeloLuminaria");
-  const contadorLuminarias = $("contadorLuminarias");
-  const medidasEmbalagem = $("medidasEmbalagem");
   const cepDestino = $("cepDestino");
   const frete = $("frete");
   const statusFrete = $("statusFrete");
@@ -26,10 +21,7 @@
   let prazoFreteSelecionado = null;
 
   function moeda(valor) {
-    return Number(valor || 0).toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    });
+    return Number(valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   }
 
   function contarLetras(texto) {
@@ -42,23 +34,16 @@
 
   function formatarCep(valor) {
     const numeros = String(valor || "").replace(/\D/g, "").slice(0, 8);
-    return numeros.length > 5
-      ? numeros.slice(0, 5) + "-" + numeros.slice(5)
-      : numeros;
+    return numeros.length > 5 ? numeros.slice(0, 5) + "-" + numeros.slice(5) : numeros;
   }
 
   function lerFrete() {
-    const numero = Number(
-      frete.value.trim().replace(/\./g, "").replace(",", ".")
-    );
+    const numero = Number(frete.value.trim().replace(/\./g, "").replace(",", "."));
     return Number.isFinite(numero) && numero >= 0 ? numero : 0;
   }
 
   function calcularValor(qtdLetras) {
-    if (!Number.isInteger(qtdLetras) || qtdLetras <= 0) {
-      return { extras: 0, adicional: 0, valor: 0 };
-    }
-
+    if (!Number.isInteger(qtdLetras) || qtdLetras <= 0) return { extras: 0, adicional: 0, valor: 0 };
     const extras = Math.max(0, qtdLetras - LIMITE_BASE);
     const adicional = extras * VALOR_EXTRA;
     return { extras, adicional, valor: VALOR_BASE + adicional };
@@ -73,14 +58,12 @@
       const nomeInput = card.querySelector(".nome-luminaria");
       const quantidadeInput = card.querySelector(".quantidade-letras");
       const qtd = Number(quantidadeInput.value) || 0;
-      const calculo = calcularValor(qtd);
-
       return {
         numero: indice + 1,
         nome: nomeInput.value.trim(),
         cor: card.dataset.cor || "Transparente",
         qtd,
-        ...calculo
+        ...calcularValor(qtd)
       };
     });
   }
@@ -93,14 +76,7 @@
       3: { altura: 24, largura: 30, comprimento: 30 },
       4: { altura: 16, largura: 20, comprimento: 30 }
     };
-
-    if (tabela[qtd]) return tabela[qtd];
-
-    return {
-      altura: Math.min(50, 8 * Math.ceil(qtd / 2)),
-      largura: 20,
-      comprimento: 30
-    };
+    return tabela[qtd] || { altura: Math.min(50, 8 * Math.ceil(qtd / 2)), largura: 20, comprimento: 30 };
   }
 
   function textoDimensoes() {
@@ -120,7 +96,7 @@
 
   function limparOpcoesFrete() {
     opcoesFrete.innerHTML = "";
-    frete.value = "";
+    frete.value = "0,00";
     servicoFreteSelecionado = "";
     prazoFreteSelecionado = null;
   }
@@ -136,7 +112,6 @@
       card.querySelector(".numero-luminaria").textContent = String(indice + 1);
       card.querySelector(".btn-remover").hidden = cards.length === 1;
     });
-    contadorLuminarias.textContent = String(cards.length);
   }
 
   function atualizarResumo() {
@@ -145,28 +120,28 @@
     const valorDoFrete = lerFrete();
     const total = subtotal + valorDoFrete;
 
-    $("resCliente").textContent = cliente.value.trim() || "—";
-    $("resLuminarias").textContent = `${itens.length} ${itens.length === 1 ? "luminária" : "luminárias"}`;
+    $("resLuminarias").textContent = String(itens.length);
     $("resEmbalagem").textContent = textoDimensoes();
     $("resSubtotal").textContent = moeda(subtotal);
     $("resFrete").textContent = moeda(valorDoFrete);
     $("resTotal").textContent = moeda(total);
-    medidasEmbalagem.textContent = "Embalagem: " + textoDimensoes();
 
     $("resItens").innerHTML = itens.map((item) => `
       <div class="resumo-item">
-        <div>
+        <div class="resumo-item-topo">
           <strong>${item.numero}. ${item.nome || "Nome não informado"}</strong>
-          <small>${item.cor} • ${item.qtd} ${item.qtd === 1 ? "letra" : "letras"}</small>
+          <strong>${moeda(item.valor)}</strong>
         </div>
-        <strong>${moeda(item.valor)}</strong>
+        <small>${item.cor} • ${item.qtd} ${item.qtd === 1 ? "letra" : "letras"}</small>
       </div>
     `).join("");
   }
 
   function atualizarCard(card) {
     const qtd = Number(card.querySelector(".quantidade-letras").value) || 0;
+    const nome = card.querySelector(".nome-luminaria").value.trim() || "Alice";
     card.querySelector(".valor-item").textContent = moeda(calcularValor(qtd).valor);
+    card.querySelector(".nome-previa").textContent = nome;
     atualizarResumo();
   }
 
@@ -224,10 +199,7 @@
     botao.classList.add("ativa");
     frete.value = Number(opcao.valor).toFixed(2).replace(".", ",");
     servicoFreteSelecionado = opcao.nome || opcao.servico || "Frete";
-    prazoFreteSelecionado = Number.isFinite(Number(opcao.prazoDias))
-      ? Number(opcao.prazoDias)
-      : null;
-
+    prazoFreteSelecionado = Number.isFinite(Number(opcao.prazoDias)) ? Number(opcao.prazoDias) : null;
     mostrarStatus("sucesso", `${servicoFreteSelecionado} selecionado: ${moeda(Number(opcao.valor))}`);
     atualizarResumo();
   }
@@ -238,14 +210,11 @@
       const botao = document.createElement("button");
       botao.type = "button";
       botao.className = "opcao-frete";
-      const prazo = Number.isFinite(Number(opcao.prazoDias))
-        ? `${Number(opcao.prazoDias)} dia(s) útil(eis)`
-        : "Prazo não informado";
-
+      const prazo = Number.isFinite(Number(opcao.prazoDias)) ? `${Number(opcao.prazoDias)} dia(s) útil(eis)` : "Prazo não informado";
       botao.innerHTML = `
         <span class="opcao-frete-topo">
-          <span class="opcao-frete-nome">${opcao.nome || opcao.servico || "Frete"}</span>
-          <span class="opcao-frete-valor">${moeda(Number(opcao.valor))}</span>
+          <span>${opcao.nome || opcao.servico || "Frete"}</span>
+          <span>${moeda(Number(opcao.valor))}</span>
         </span>
         <span class="opcao-frete-prazo">${prazo}</span>
       `;
@@ -271,7 +240,7 @@
     }
 
     limparOpcoesFrete();
-    mostrarStatus("carregando", "Consultando a Manda Bem. Na primeira consulta, aguarde até cerca de 50 segundos...");
+    mostrarStatus("carregando", "Consultando o frete. Na primeira tentativa, aguarde até cerca de 50 segundos...");
     btnFrete.disabled = true;
     btnFrete.textContent = "Consultando...";
 
@@ -291,28 +260,48 @@
         })
       });
 
-      let dados;
-      try {
-        dados = await resposta.json();
-      } catch {
-        throw new Error("O servidor respondeu em formato inesperado.");
-      }
+      const dados = await resposta.json();
 
-      if (!resposta.ok || !dados.sucesso) {
-        throw new Error(dados.erro || "Não foi possível calcular o frete.");
-      }
-      if (!Array.isArray(dados.opcoes) || dados.opcoes.length === 0) {
-        throw new Error("Nenhuma opção de frete foi encontrada.");
-      }
+      if (!resposta.ok || !dados.sucesso) throw new Error(dados.erro || "Não foi possível calcular o frete.");
+      if (!Array.isArray(dados.opcoes) || dados.opcoes.length === 0) throw new Error("Nenhuma opção de frete foi encontrada.");
 
       exibirOpcoesFrete(dados.opcoes);
-      mostrarStatus("sucesso", "Escolha uma das opções abaixo para somar o frete ao total.");
+      mostrarStatus("sucesso", "Escolha uma opção de entrega para somar o frete ao total.");
     } catch (erro) {
       mostrarStatus("erro", `${erro.message} Confira o CEP e tente novamente.`);
     } finally {
       btnFrete.disabled = false;
-      btnFrete.textContent = "🚚 Consultar frete";
+      btnFrete.textContent = "🔎 Calcular frete";
     }
+  }
+
+  function montarTexto() {
+    const itens = obterItens();
+    const subtotal = itens.reduce((soma, item) => soma + item.valor, 0);
+    const valorDoFrete = lerFrete();
+    const total = subtotal + valorDoFrete;
+
+    const listaTexto = itens.map((item) => `
+${item.numero}️⃣ ${item.nome || "Nome não informado"}
+Cor: ${item.cor}
+Quantidade de letras: ${item.qtd}
+Valor da luminária: ${moeda(item.valor)}`).join("\n");
+
+    return `ORÇAMENTO DA LUMINÁRIA — ENCANTO EM RESINA
+
+Cliente: ${cliente.value.trim() || "Não informado"}
+
+${listaTexto}
+
+Quantidade de luminárias: ${itens.length}
+Embalagem: ${textoDimensoes()}
+Subtotal: ${moeda(subtotal)}
+Frete: ${moeda(valorDoFrete)}${servicoFreteSelecionado ? ` (${servicoFreteSelecionado})` : ""}
+Prazo do frete: ${prazoFreteSelecionado ? `${prazoFreteSelecionado} dia(s) útil(eis)` : "Não informado"}
+TOTAL: ${moeda(total)}
+
+Prazo de produção: 6 dias úteis.
+Orçamento válido por 7 dias.`;
   }
 
   $("btnAdicionar").addEventListener("click", () => {
@@ -339,37 +328,8 @@
   btnFrete.addEventListener("click", consultarFrete);
 
   $("btnCopiar").addEventListener("click", async () => {
-    const itens = obterItens();
-    const subtotal = itens.reduce((soma, item) => soma + item.valor, 0);
-    const valorDoFrete = lerFrete();
-    const total = subtotal + valorDoFrete;
-
-    const listaTexto = itens.map((item) => `
-${item.numero}️⃣ ${item.nome || "Nome não informado"}
-Cor: ${item.cor}
-Quantidade de letras: ${item.qtd}
-Preço base: ${item.qtd > 0 ? moeda(VALOR_BASE) : moeda(0)}
-Letras extras: ${item.extras}
-Adicional: ${moeda(item.adicional)}
-Valor da luminária: ${moeda(item.valor)}`).join("\n");
-
-    const texto = `ORÇAMENTO AURORA LUMINÁRIAS
-
-Cliente: ${cliente.value.trim() || "Não informado"}
-WhatsApp: ${telefone.value.trim() || "Não informado"}
-Cidade: ${cidade.value.trim() || "Não informada"}
-
-${listaTexto}
-
-Quantidade de luminárias: ${itens.length}
-Embalagem: ${textoDimensoes()}
-Subtotal das luminárias: ${moeda(subtotal)}
-Frete: ${moeda(valorDoFrete)}${servicoFreteSelecionado ? ` (${servicoFreteSelecionado})` : ""}
-Prazo: ${prazoFreteSelecionado ? `${prazoFreteSelecionado} dia(s) útil(eis)` : "Não informado"}
-TOTAL: ${moeda(total)}`;
-
     try {
-      await navigator.clipboard.writeText(texto);
+      await navigator.clipboard.writeText(montarTexto());
       $("mensagem").style.display = "block";
       setTimeout(() => { $("mensagem").style.display = "none"; }, 2500);
     } catch {
@@ -377,10 +337,13 @@ TOTAL: ${moeda(total)}`;
     }
   });
 
+  $("btnWhatsapp").addEventListener("click", () => {
+    const texto = encodeURIComponent(montarTexto());
+    window.open(`https://wa.me/?text=${texto}`, "_blank");
+  });
+
   $("btnLimpar").addEventListener("click", () => {
     cliente.value = "";
-    telefone.value = "";
-    cidade.value = "";
     cepDestino.value = "";
     listaLuminarias.innerHTML = "";
     proximoId = 1;
@@ -395,9 +358,7 @@ TOTAL: ${moeda(total)}`;
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker
-        .register("service-worker.js")
-        .catch((erro) => console.error("Erro ao registrar Service Worker:", erro));
+      navigator.serviceWorker.register("service-worker.js").catch(console.error);
     });
   }
 })();
