@@ -646,3 +646,34 @@ footer {
     min-width: 0;
   }
 }
+/* ===== LOGO DO CABEÇALHO ===== */
+
+.topo{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    gap:12px;
+    padding:30px 20px;
+}
+
+.logo-topo{
+    width:260px;
+    max-width:90%;
+    height:auto;
+    display:block;
+}
+
+.titulo-topo h1{
+    margin:0;
+    font-size:32px;
+    color:#8A1245;
+}
+
+.titulo-topo p{
+    margin-top:8px;
+    font-size:17px;
+    color:#b06a85;
+    font-weight:500;
+}
