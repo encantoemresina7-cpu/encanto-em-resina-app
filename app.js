@@ -3,7 +3,6 @@
 
   const VALOR_BASE = 89.99;
   const LIMITE_BASE = 5;
-  const VALOR_EXTRA = 5;
   const API_FRETE_URL = "https://calculadora-aurora.onrender.com/calcular-frete";
 
   const $ = (id) => document.getElementById(id);
@@ -41,13 +40,31 @@
     const numero = Number(frete.value.trim().replace(/\./g, "").replace(",", "."));
     return Number.isFinite(numero) && numero >= 0 ? numero : 0;
   }
-
-  function calcularValor(qtdLetras) {
-    if (!Number.isInteger(qtdLetras) || qtdLetras <= 0) return { extras: 0, adicional: 0, valor: 0 };
-    const extras = Math.max(0, qtdLetras - LIMITE_BASE);
-    const adicional = extras * VALOR_EXTRA;
-    return { extras, adicional, valor: VALOR_BASE + adicional };
+function calcularValor(qtdLetras) {
+  if (!Number.isInteger(qtdLetras) || qtdLetras <= 0) {
+    return { extras: 0, adicional: 0, valor: 0 };
   }
+
+  const extras = Math.max(0, qtdLetras - LIMITE_BASE);
+  let adicional = 0;
+
+  if (qtdLetras >= 6) adicional += 5;
+  if (qtdLetras >= 7) adicional += 5;
+  if (qtdLetras >= 8) adicional += 7;
+  if (qtdLetras >= 9) adicional += 7;
+  if (qtdLetras >= 10) adicional += 9;
+
+  if (qtdLetras > 10) {
+    adicional += (qtdLetras - 10) * 10;
+  }
+
+  return {
+    extras,
+    adicional,
+    valor: VALOR_BASE + adicional
+  };
+}
+
 
   function obterCards() {
     return [...listaLuminarias.querySelectorAll(".luminaria-card")];
