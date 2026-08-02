@@ -198,3 +198,98 @@ button{
   body{padding:12px}
   .card{padding:17px}
 }
+
+/* Versão 4.2 — múltiplas luminárias */
+.titulo-com-contador{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.titulo-com-contador h2{margin-bottom:14px}
+
+.contador{
+  min-width:34px;
+  height:34px;
+  padding:0 10px;
+  border-radius:999px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#fff3e0;
+  color:#e65100;
+  font-weight:bold;
+}
+
+.luminaria-card{
+  padding:16px;
+  margin-bottom:14px;
+  border:2px solid #ffe0b2;
+  border-radius:14px;
+  background:#fffdfa;
+}
+
+.luminaria-cabecalho{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.luminaria-cabecalho h3{color:#e65100;font-size:18px}
+
+.btn-remover{
+  width:auto;
+  margin:0;
+  padding:9px 11px;
+  background:#ffebee;
+  color:#b71c1c;
+  font-size:13px;
+}
+
+.btn-remover[hidden]{display:none}
+
+.btn-adicionar{background:#fff3e0;color:#e65100;border:2px dashed #ffb74d}
+
+.valor-luminaria{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:15px;
+  margin-top:15px;
+  padding:12px;
+  border-radius:10px;
+  background:#e8f5e9;
+  color:#1b5e20;
+}
+
+.valor-luminaria strong{font-size:19px}
+
+.resumo-itens{
+  display:grid;
+  gap:8px;
+  margin:14px 0;
+}
+
+.resumo-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:11px;
+  border-radius:10px;
+  background:#fafafa;
+  border:1px solid #eee;
+}
+
+.resumo-item div{display:flex;flex-direction:column;gap:3px}
+.resumo-item small{color:#666}
+.resumo-item > strong{color:#2e7d32;white-space:nowrap}
+
+.subtotal{
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px solid #eee;
+  font-weight:bold;
+}
