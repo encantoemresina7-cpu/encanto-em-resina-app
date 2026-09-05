@@ -164,6 +164,11 @@ input:focus {
   background: #25d366;
 }
 
+.btn-formulario {
+  color: white;
+  background: linear-gradient(135deg, #75405b, #a81245);
+}
+
 .btn-largo {
   width: 100%;
   margin-top: 10px;
