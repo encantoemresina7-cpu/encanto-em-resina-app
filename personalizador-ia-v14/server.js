@@ -16,7 +16,24 @@ app.use(express.json({ limit: "1mb" }));
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/reference", express.static(path.join(__dirname, "reference")));
 
-const referenceImagePath = path.join(__dirname, "reference", "luminaria-referencia.jpg");
+const colorReferences = {
+  Rosa: "rosa.jpg",
+  Azul: "azul.jpg",
+  Verde: "verde.jpg",
+  "Lilás": "lilas.jpg",
+  Dourado: "dourado.jpg",
+  Transparente: "transparente.jpg",
+};
+
+const allowedColors = new Set([
+  "Rosa",
+  "Vermelho",
+  "Azul",
+  "Verde",
+  "Lilás",
+  "Dourado",
+  "Transparente",
+]);
 
 const recentRequests = new Map();
 const MIN_INTERVAL_MS = 1500;
@@ -32,63 +49,67 @@ function normalizeName(value = "") {
     .slice(0, 12);
 }
 
-const allowedColors = new Set([
-  "Rosa",
-  "Vermelho",
-  "Azul",
-  "Verde",
-  "Lilás",
-  "Dourado",
-  "Transparente",
-]);
+function getReferenceImagePath(color) {
+  const file = colorReferences[color];
+  return file ? path.join(__dirname, "reference", file) : null;
+}
 
 function buildPrompt(name, color) {
   return `
-Edite a foto de referência fornecida, preservando o máximo possível da fotografia original.
+A imagem fornecida é a FOTO DE REFERÊNCIA APROVADA da Encanto em Resina para a cor "${color}".
 
 OBJETIVO PRINCIPAL:
-Substitua SOMENTE a luminária personalizada da foto por uma versão com o nome exato "${name}" e na cor "${color}".
+Edite essa fotografia preservando o máximo possível o produto, o cenário, a base, a perspectiva e a iluminação. Altere principalmente o nome atual da luminária para o nome exato "${name}".
 
 REGRAS OBRIGATÓRIAS:
 - O nome deve ser escrito EXATAMENTE como "${name}", sem letras extras, sem letras faltando e sem trocar a ordem.
-- Use uma letra de resina/acrílico por caractere, em caixa alta, apoiadas sobre a base.
-- Mantenha a base branca retangular da foto, com a mesma proporção, posição, perspectiva e iluminação de LED quente.
-- Mantenha o cenário infantil, cômoda, urso, lua, cortina, enquadramento, perspectiva, profundidade de campo e iluminação o mais próximos possível da imagem original.
-- As letras devem parecer peças físicas reais de resina/acrílico, transparentes na parte inferior e com acabamento artesanal na parte superior.
-- Para "${color}", adapte apenas o acabamento/cor das letras; não transforme a cor geral do quarto.
-- A parte inferior das letras deve permanecer majoritariamente transparente, com apenas um brilho amarelo suave vindo do LED da base.
-- Se usar borboletas decorativas, coloque-as SOMENTE na primeira e na última letra. Não coloque borboletas nas letras do meio.
-- Não adicione textos, logotipos, etiquetas, objetos ou letras fora da luminária.
-- Não deixe a luminária flutuando: as letras devem tocar visualmente a base e parecer realmente encaixadas nela.
+- Use uma peça física de resina/acrílico por letra, em caixa alta, apoiada e encaixada visualmente sobre a base.
+- Preserve o acabamento e a combinação de cor da FOTO DE REFERÊNCIA APROVADA para "${color}".
+- Não invente outra tonalidade e não mude a paleta geral do ambiente.
+- Mantenha a base branca retangular com proporção, posição, perspectiva e LED semelhantes à referência escolhida.
+- Mantenha cenário infantil, objetos, enquadramento, profundidade de campo e iluminação o mais próximos possível da referência.
+- As letras devem parecer peças artesanais reais de resina/acrílico, com transparência e brilho coerentes com a referência.
+- A parte inferior das letras deve permanecer majoritariamente transparente quando esse acabamento estiver presente na referência, com apenas um brilho amarelo suave vindo do LED.
+- Se a referência tiver borboletas ou se elas forem usadas na nova composição, coloque-as SOMENTE na primeira e na última letra. Nunca nas letras do meio.
+- Não adicione textos, logotipos, etiquetas, letras soltas ou objetos estranhos fora da luminária.
+- Não deixe as letras flutuando. Todas devem tocar visualmente a base e parecer realmente encaixadas nela.
 - A imagem final deve parecer uma fotografia profissional real do produto, não uma montagem digital.
 
 IMPORTANTE:
-Priorize fidelidade à foto de referência. Preserve cenário e base; altere principalmente o nome e a cor das letras.
+Priorize fidelidade à referência aprovada da cor "${color}" e altere principalmente o nome para "${name}".
 `.trim();
 }
 
-async function buildDemoImage(name, color) {
+async function buildDemoImage(name, color, referenceImagePath) {
   const refB64 = await fs.promises.readFile(referenceImagePath, "base64");
   const safeName = name.replace(/[<>&\"]/g, "");
   const safeColor = color.replace(/[<>&\"]/g, "");
 
   const svg = `
   <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
-    <image href="data:image/jpeg;base64,${refB64}" x="0" y="0" width="1200" height="800" preserveAspectRatio="xMidYMid slice"/>
-    <rect x="0" y="650" width="1200" height="150" fill="rgba(65,22,36,0.82)"/>
-    <text x="600" y="705" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="34" font-weight="700">MODO TESTE • SEM CRÉDITOS</text>
-    <text x="600" y="752" text-anchor="middle" fill="#ffe4ed" font-family="Arial, sans-serif" font-size="28">Nome: ${safeName} • Cor: ${safeColor}</text>
+    <image href="data:image/jpeg;base64,${refB64}" x="0" y="0" width="1200" height="800" preserveAspectRatio="xMidYMid meet"/>
+    <rect x="0" y="650" width="1200" height="150" fill="rgba(65,22,36,0.84)"/>
+    <text x="600" y="704" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="32" font-weight="700">MODO TESTE • REFERÊNCIA ${safeColor.toUpperCase()}</text>
+    <text x="600" y="754" text-anchor="middle" fill="#ffe4ed" font-family="Arial, sans-serif" font-size="28">Nome digitado: ${safeName} • sem consumo de créditos</text>
   </svg>`;
 
   return `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
 }
 
 app.get("/health", (_req, res) => {
+  const references = Object.fromEntries(
+    Object.entries(colorReferences).map(([color, file]) => [
+      color,
+      fs.existsSync(path.join(__dirname, "reference", file)),
+    ])
+  );
+
   res.json({
     ok: true,
     model: MODEL,
     demo_mode: DEMO_MODE,
-    reference_image: fs.existsSync(referenceImagePath),
+    references,
+    vermelho: "aguardando_foto_aprovada",
   });
 });
 
@@ -103,23 +124,31 @@ app.post("/api/gerar-luminaria", async (req, res) => {
     if (!allowedColors.has(color)) {
       return res.status(400).json({ error: "Escolha uma cor válida." });
     }
-    if (!fs.existsSync(referenceImagePath)) {
-      return res.status(500).json({
-        error: "A imagem de referência não foi encontrada no servidor.",
+    if (color === "Vermelho") {
+      return res.status(400).json({
+        error: "A cor Vermelho está aguardando uma foto de referência aprovada.",
       });
     }
 
-    // MODO TESTE: não chama a API e não consome créditos.
+    const referenceImagePath = getReferenceImagePath(color);
+    if (!referenceImagePath || !fs.existsSync(referenceImagePath)) {
+      return res.status(500).json({
+        error: `A foto de referência aprovada da cor ${color} não foi encontrada no servidor.`,
+      });
+    }
+
+    // MODO TESTE: mostra a referência aprovada da cor escolhida e não consome créditos.
     if (DEMO_MODE) {
-      await new Promise((resolve) => setTimeout(resolve, 900));
+      await new Promise((resolve) => setTimeout(resolve, 650));
       return res.json({
         ok: true,
         demo: true,
         name,
         color,
         model: MODEL,
-        image_url: await buildDemoImage(name, color),
-        message: "Modo teste ativo: nenhum crédito foi usado. A imagem exibida serve apenas para testar o fluxo do app.",
+        reference: colorReferences[color],
+        image_url: await buildDemoImage(name, color, referenceImagePath),
+        message: `Modo teste ativo: exibindo a referência aprovada da cor ${color}. Nenhum crédito foi usado.`,
       });
     }
 
@@ -142,10 +171,11 @@ app.post("/api/gerar-luminaria", async (req, res) => {
     }
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const fileName = colorReferences[color];
 
     const referenceImage = await toFile(
       await fs.promises.readFile(referenceImagePath),
-      "luminaria-referencia.jpg",
+      fileName,
       { type: "image/jpeg" }
     );
 
@@ -180,6 +210,7 @@ app.post("/api/gerar-luminaria", async (req, res) => {
       name,
       color,
       model: MODEL,
+      reference: fileName,
       image_url: imageUrl,
     });
   } catch (error) {
