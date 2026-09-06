@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#c64d72" />
+  <title>Encanto em Resina • Personalizador IA</title>
+  <style>
+    :root{
+      --bg:#fff8fa;
+      --card:#ffffff;
+      --ink:#5a303b;
+      --muted:#866a72;
+      --line:#eddbe0;
+      --accent:#c94f73;
+      --accent-dark:#ab3e5f;
+      --soft:#fff1f5;
+      --success:#eaf7ee;
+      --success-ink:#2d6b43;
+      --error:#fff0f0;
+      --error-ink:#9b3434;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--ink);
+      background:linear-gradient(180deg,#fffafb,#f7eef1);
+    }
+    .wrap{max-width:1180px;margin:0 auto;padding:22px}
+    header{
+      display:flex;justify-content:space-between;align-items:center;
+      gap:16px;flex-wrap:wrap;margin-bottom:20px
+    }
+    h1{margin:0;font-size:clamp(30px,4vw,46px);line-height:1}
+    header p{margin:8px 0 0;color:var(--muted)}
+    .badge{
+      background:#fff;border:1px solid var(--line);
+      border-radius:999px;padding:10px 14px;color:var(--muted);font-size:13px
+    }
+    .grid{display:grid;grid-template-columns:360px 1fr;gap:22px}
+    @media(max-width:900px){.grid{grid-template-columns:1fr}}
+    .card{
+      background:rgba(255,255,255,.97);
+      border:1px solid var(--line);
+      border-radius:24px;
+      padding:18px;
+      box-shadow:0 16px 36px rgba(85,46,57,.08)
+    }
+    label{display:block;font-weight:800;margin-bottom:8px}
+    input{
+      width:100%;padding:14px 16px;border:1px solid #dbc8cf;border-radius:15px;
+      font-size:18px;color:var(--ink);outline:none
+    }
+    input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(201,79,115,.12)}
+    .hint{margin-top:7px;color:var(--muted);font-size:12px;line-height:1.45}
+    .section{margin-top:18px}
+    .colors{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    .color{
+      display:flex;align-items:center;gap:10px;
+      padding:11px 12px;border:1px solid var(--line);border-radius:14px;
+      background:#fff;color:var(--ink);font-weight:750;cursor:pointer
+    }
+    .color.active{outline:2px solid var(--accent);background:#fff8fb}
+    .dot{width:24px;height:24px;border-radius:50%;border:1px solid rgba(0,0,0,.08)}
+    .actions{display:grid;gap:10px;margin-top:20px}
+    button.action{
+      border:0;border-radius:15px;padding:14px 16px;
+      font-size:16px;font-weight:850;cursor:pointer
+    }
+    .primary{background:linear-gradient(180deg,var(--accent),var(--accent-dark));color:#fff}
+    .secondary{background:#fff;border:1px solid var(--line)!important;color:var(--ink)}
+    button:disabled{opacity:.5;cursor:not-allowed}
+    .status{
+      margin-top:14px;padding:13px 14px;border-radius:14px;
+      background:var(--soft);border:1px solid #f0d8e0;
+      color:var(--muted);font-size:13px;line-height:1.5
+    }
+    .status.success{background:var(--success);color:var(--success-ink);border-color:#caead4}
+    .status.error{background:var(--error);color:var(--error-ink);border-color:#f0cccc}
+    .preview{
+      min-height:520px;border:1px solid var(--line);border-radius:20px;
+      background:#f7ecef;overflow:hidden;display:grid;place-items:center;position:relative
+    }
+    .preview img{width:100%;height:100%;object-fit:contain;display:block;background:#f6ecef}
+    .empty{text-align:center;color:var(--muted);padding:34px;max-width:520px;line-height:1.55}
+    .spinner{
+      width:44px;height:44px;border-radius:50%;
+      border:4px solid #f1d9e1;border-top-color:var(--accent);
+      animation:spin .9s linear infinite;margin:0 auto 14px
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+    .pill{background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 10px;color:var(--muted);font-size:13px}
+    .small-note{
+      margin-top:14px;background:#fff8ec;border:1px solid #f1dfb4;
+      color:#725f2e;padding:12px 14px;border-radius:14px;font-size:13px;line-height:1.5
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Encanto em Resina</h1>
+        <p>Digite o nome, escolha a cor e a IA cria uma nova foto completa da luminária.</p>
+      </div>
+      <div class="badge">Personalizador IA • V14</div>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <label for="name">Nome na luminária</label>
+        <input id="name" maxlength="12" placeholder="Digite o nome" autocomplete="off" />
+        <div class="hint">Até 12 letras. Ex.: ANA, TIAGO, VALENTINA.</div>
+
+        <div class="section">
+          <label>Escolha a cor</label>
+          <div class="colors" id="colors"></div>
+        </div>
+
+        <div class="actions">
+          <button class="action primary" id="generate">✨ Gerar imagem com IA</button>
+          <button class="action secondary" id="download" disabled>Baixar imagem</button>
+          <button class="action secondary" id="share" disabled>Compartilhar imagem</button>
+        </div>
+
+        <div class="status" id="status">
+          Pronto. Digite o nome, escolha a cor e clique em <strong>Gerar imagem com IA</strong>.
+        </div>
+
+        <div class="small-note">
+          A IA recebe a foto de referência da sua luminária e tenta manter cenário, base, iluminação e estilo,
+          alterando principalmente o nome e a cor.
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="preview" id="preview">
+          <div class="empty" id="empty">
+            <strong>A imagem aparecerá aqui.</strong><br><br>
+            Nesta versão não montamos pedaços de letras por cima da foto.
+            A foto inteira é recriada pela IA.
+          </div>
+          <img id="result" alt="Prévia gerada pela IA" hidden />
+        </div>
+        <div class="meta">
+          <div class="pill" id="namePill">Nome: —</div>
+          <div class="pill" id="colorPill">Cor: Rosa</div>
+          <div class="pill">Foto completa</div>
+          <div class="pill">Base de referência</div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+<script>
+const colors = [
+  {name:'Rosa', hex:'#e85d88'},
+  {name:'Vermelho', hex:'#e3424b'},
+  {name:'Azul', hex:'#3775df'},
+  {name:'Verde', hex:'#36a05b'},
+  {name:'Lilás', hex:'#9b62d5'},
+  {name:'Dourado', hex:'#d9a128'},
+  {name:'Transparente', hex:'#e4eff3'}
+];
+
+let selected = colors[0];
+let lastImage = '';
+
+const colorsEl = document.getElementById('colors');
+const nameInput = document.getElementById('name');
+const generateBtn = document.getElementById('generate');
+const downloadBtn = document.getElementById('download');
+const shareBtn = document.getElementById('share');
+const statusEl = document.getElementById('status');
+const resultEl = document.getElementById('result');
+const emptyEl = document.getElementById('empty');
+const namePill = document.getElementById('namePill');
+const colorPill = document.getElementById('colorPill');
+
+function cleanName(value){
+  return value.toUpperCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^A-Z\s]/g,'')
+    .slice(0,12);
+}
+
+colors.forEach((c, i) => {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'color' + (i === 0 ? ' active' : '');
+  const bg = c.name === 'Transparente'
+    ? 'linear-gradient(135deg,#fff,#dbe9ee)'
+    : c.hex;
+  btn.innerHTML = `<span class="dot" style="background:${bg}"></span>${c.name}`;
+  btn.addEventListener('click', () => {
+    selected = c;
+    document.querySelectorAll('.color').forEach(x => x.classList.remove('active'));
+    btn.classList.add('active');
+    colorPill.textContent = 'Cor: ' + c.name;
+  });
+  colorsEl.appendChild(btn);
+});
+
+nameInput.addEventListener('input', () => {
+  const clean = cleanName(nameInput.value);
+  if (clean !== nameInput.value) nameInput.value = clean;
+  namePill.textContent = 'Nome: ' + (clean.trim() || '—');
+});
+
+function setStatus(html, type=''){
+  statusEl.className = 'status' + (type ? ' ' + type : '');
+  statusEl.innerHTML = html;
+}
+
+function showLoading(){
+  resultEl.hidden = true;
+  emptyEl.hidden = false;
+  emptyEl.innerHTML = '<div class="spinner"></div><strong>Gerando a foto...</strong><br><br>Pode levar alguns segundos.';
+}
+
+function showImage(src){
+  lastImage = src;
+  resultEl.src = src;
+  resultEl.hidden = false;
+  emptyEl.hidden = true;
+  downloadBtn.disabled = false;
+  shareBtn.disabled = false;
+}
+
+async function generate(){
+  const name = cleanName(nameInput.value).trim().replace(/\s+/g,'');
+  nameInput.value = name;
+  namePill.textContent = 'Nome: ' + (name || '—');
+
+  if (!name){
+    setStatus('Digite o <strong>nome</strong> antes de gerar.', 'error');
+    nameInput.focus();
+    return;
+  }
+
+  generateBtn.disabled = true;
+  downloadBtn.disabled = true;
+  shareBtn.disabled = true;
+  setStatus(`Criando a luminária <strong>${name}</strong> na cor <strong>${selected.name}</strong>...`);
+  showLoading();
+
+  try{
+    const response = await fetch('/api/gerar-luminaria', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name, color:selected.name})
+    });
+
+    const data = await response.json();
+
+    if(!response.ok){
+      throw new Error(data.error || 'Não foi possível gerar a imagem.');
+    }
+
+    showImage(data.image_url);
+    setStatus('Imagem gerada com sucesso ✅ Você já pode baixar ou compartilhar.', 'success');
+  }catch(err){
+    emptyEl.hidden = false;
+    emptyEl.innerHTML = '<strong>Não foi possível gerar.</strong><br><br>' + err.message;
+    setStatus(err.message, 'error');
+  }finally{
+    generateBtn.disabled = false;
+  }
+}
+
+generateBtn.addEventListener('click', generate);
+nameInput.addEventListener('keydown', e => {
+  if(e.key === 'Enter') generate();
+});
+
+downloadBtn.addEventListener('click', () => {
+  if(!lastImage) return;
+  const name = cleanName(nameInput.value).trim().replace(/\s+/g,'') || 'luminaria';
+  const a = document.createElement('a');
+  a.href = lastImage;
+  a.download = `luminaria-${name.toLowerCase()}-${selected.name.toLowerCase()}.png`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+});
+
+shareBtn.addEventListener('click', async () => {
+  if(!lastImage) return;
+  const name = cleanName(nameInput.value).trim().replace(/\s+/g,'');
+  try{
+    const response = await fetch(lastImage);
+    const blob = await response.blob();
+    const file = new File([blob], 'luminaria-personalizada.png', {type:'image/png'});
+    const text = `Prévia da sua luminária personalizada ✨\nNome: ${name}\nCor: ${selected.name}`;
+
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({title:'Encanto em Resina', text, files:[file]});
+    }else if(navigator.share){
+      await navigator.share({title:'Encanto em Resina', text});
+    }else{
+      alert('Neste navegador, baixe a imagem e envie pelo WhatsApp.');
+    }
+  }catch(err){
+    if(err.name !== 'AbortError') alert('Não foi possível compartilhar neste navegador.');
+  }
+});
+</script>
+</body>
+</html>
