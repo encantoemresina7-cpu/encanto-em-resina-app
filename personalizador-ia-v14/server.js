@@ -54,6 +54,11 @@ function getReferenceImagePath(color) {
   return file ? path.join(__dirname, "reference", file) : null;
 }
 
+function getReferenceImageUrl(color) {
+  const file = colorReferences[color];
+  return file ? `/reference/${encodeURIComponent(file)}?v=3` : null;
+}
+
 function buildPrompt(name, color) {
   return `
 A imagem fornecida é a FOTO DE REFERÊNCIA APROVADA da Encanto em Resina para a cor "${color}".
@@ -78,22 +83,6 @@ REGRAS OBRIGATÓRIAS:
 IMPORTANTE:
 Priorize fidelidade à referência aprovada da cor "${color}" e altere principalmente o nome para "${name}".
 `.trim();
-}
-
-async function buildDemoImage(name, color, referenceImagePath) {
-  const refB64 = await fs.promises.readFile(referenceImagePath, "base64");
-  const safeName = name.replace(/[<>&\"]/g, "");
-  const safeColor = color.replace(/[<>&\"]/g, "");
-
-  const svg = `
-  <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
-    <image href="data:image/jpeg;base64,${refB64}" x="0" y="0" width="1200" height="800" preserveAspectRatio="xMidYMid meet"/>
-    <rect x="0" y="650" width="1200" height="150" fill="rgba(65,22,36,0.84)"/>
-    <text x="600" y="704" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="32" font-weight="700">MODO TESTE • REFERÊNCIA ${safeColor.toUpperCase()}</text>
-    <text x="600" y="754" text-anchor="middle" fill="#ffe4ed" font-family="Arial, sans-serif" font-size="28">Nome digitado: ${safeName} • sem consumo de créditos</text>
-  </svg>`;
-
-  return `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
 }
 
 app.get("/health", (_req, res) => {
@@ -137,9 +126,8 @@ app.post("/api/gerar-luminaria", async (req, res) => {
       });
     }
 
-    // MODO TESTE: mostra a referência aprovada da cor escolhida e não consome créditos.
     if (DEMO_MODE) {
-      await new Promise((resolve) => setTimeout(resolve, 650));
+      await new Promise((resolve) => setTimeout(resolve, 450));
       return res.json({
         ok: true,
         demo: true,
@@ -147,8 +135,8 @@ app.post("/api/gerar-luminaria", async (req, res) => {
         color,
         model: MODEL,
         reference: colorReferences[color],
-        image_url: await buildDemoImage(name, color, referenceImagePath),
-        message: `Modo teste ativo: exibindo a referência aprovada da cor ${color}. Nenhum crédito foi usado.`,
+        image_url: getReferenceImageUrl(color),
+        message: `Modo teste: mostrando a foto real de referência da cor ${color}. O nome ${name} foi registrado, mas ainda não foi aplicado porque a IA real está desligada. Nenhum crédito foi usado.`,
       });
     }
 
@@ -161,7 +149,6 @@ app.post("/api/gerar-luminaria", async (req, res) => {
     const ip = req.headers["x-forwarded-for"]?.toString().split(",")[0]?.trim()
       || req.socket.remoteAddress
       || "unknown";
-
     const last = recentRequests.get(ip) || 0;
     const now = Date.now();
     if (last && now - last < MIN_INTERVAL_MS) {
@@ -172,7 +159,6 @@ app.post("/api/gerar-luminaria", async (req, res) => {
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const fileName = colorReferences[color];
-
     const referenceImage = await toFile(
       await fs.promises.readFile(referenceImagePath),
       fileName,
@@ -189,38 +175,17 @@ app.post("/api/gerar-luminaria", async (req, res) => {
     });
 
     const first = result?.data?.[0];
-    if (!first) {
-      throw new Error("A API não retornou uma imagem.");
-    }
+    if (!first) throw new Error("A API não retornou uma imagem.");
 
     let imageUrl = first.url || "";
-    if (first.b64_json) {
-      imageUrl = `data:image/png;base64,${first.b64_json}`;
-    }
-
-    if (!imageUrl) {
-      throw new Error("A API retornou uma resposta sem URL ou imagem em base64.");
-    }
+    if (first.b64_json) imageUrl = `data:image/png;base64,${first.b64_json}`;
+    if (!imageUrl) throw new Error("A API retornou uma resposta sem imagem.");
 
     recentRequests.set(ip, Date.now());
-
-    res.json({
-      ok: true,
-      demo: false,
-      name,
-      color,
-      model: MODEL,
-      reference: fileName,
-      image_url: imageUrl,
-    });
+    res.json({ ok: true, demo: false, name, color, model: MODEL, reference: fileName, image_url: imageUrl });
   } catch (error) {
     console.error("Erro ao gerar luminária:", error);
-
-    const message =
-      error?.error?.message ||
-      error?.message ||
-      "Erro inesperado ao gerar a imagem.";
-
+    const message = error?.error?.message || error?.message || "Erro inesperado ao gerar a imagem.";
     res.status(500).json({ error: message });
   }
 });
