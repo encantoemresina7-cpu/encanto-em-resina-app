@@ -20,6 +20,7 @@
   let proximoId = 1;
   let servicoFreteSelecionado = "";
   let prazoFreteSelecionado = null;
+  const CONSULTAS_KEY = "encanto-consultas-v1";
 
   function moeda(valor) {
     return Number(valor || 0).toLocaleString("pt-BR", {
@@ -296,6 +297,60 @@
     );
 
     atualizarResumo();
+    salvarConsulta();
+  }
+
+  function parametrosFormulario() {
+    const itens = obterItens();
+    const subtotal = itens.reduce((soma, item) => soma + item.valor, 0);
+    const valorDoFrete = lerFrete();
+    const nomes = itens.map((item) => item.nome).join(" + ");
+    const cores = itens.map((item) => item.cor).join(" / ");
+    return new URLSearchParams({
+      cliente: cliente.value.trim(), nomeCliente: cliente.value.trim(),
+      telefone: telefoneCliente.value.trim(), nomes, nomeLuminaria: nomes,
+      cores, cor: cores, quantidade: String(itens.length),
+      cep: cepDestino.value.replace(/\D/g, ""),
+      valorProduto: subtotal.toFixed(2), valorFrete: valorDoFrete.toFixed(2),
+      valorTotal: (subtotal + valorDoFrete).toFixed(2),
+      servicoFrete: servicoFreteSelecionado,
+      prazoFrete: prazoFreteSelecionado == null ? "" : String(prazoFreteSelecionado),
+      detalhes: itens.map((item) => `${item.numero}. ${item.nome} — ${item.cor} — ${moeda(item.valor)}`).join(" | ")
+    });
+  }
+
+  function lerConsultas() {
+    try { return JSON.parse(localStorage.getItem(CONSULTAS_KEY) || "[]"); }
+    catch { return []; }
+  }
+
+  function salvarConsulta() {
+    if (!servicoFreteSelecionado) return;
+    const params = parametrosFormulario();
+    const chave = [params.get("nomes"), params.get("cep")].join("|");
+    const consulta = {
+      chave, data: new Date().toLocaleString("pt-BR"),
+      cliente: params.get("cliente") || "Cliente não informado",
+      nomes: params.get("nomes"), cores: params.get("cores"), cep: params.get("cep"),
+      total: Number(params.get("valorTotal")),
+      url: `${FORMULARIO_URL}?${params.toString()}`
+    };
+    const consultas = lerConsultas().filter((item) => item.chave !== chave);
+    localStorage.setItem(CONSULTAS_KEY, JSON.stringify([consulta, ...consultas].slice(0, 100)));
+  }
+
+  function abrirConsultas() {
+    const consultas = lerConsultas();
+    if (!consultas.length) {
+      alert("Nenhuma consulta salva. Calcule o frete e escolha uma opção de entrega.");
+      return;
+    }
+    const lista = consultas.map((item, i) =>
+      `${i + 1}. ${item.nomes} | ${item.cores} | ${moeda(item.total)} | ${item.data}`
+    ).join("\n");
+    const escolha = prompt(`CONSULTAS SALVAS\n\n${lista}\n\nDigite o número da consulta que deseja enviar:`);
+    const consulta = consultas[Number(escolha) - 1];
+    if (consulta) window.open(consulta.url, "_blank");
   }
 
   function exibirOpcoesFrete(opcoes) {
@@ -443,20 +498,8 @@ Orçamento válido por 7 dias.`;
       return;
     }
 
-    const params = new URLSearchParams({
-      cliente: cliente.value.trim(),
-      telefone: telefoneCliente.value.trim(),
-      nomes: itens.map((item) => item.nome).join(" + "),
-      cores: itens.map((item) => item.cor).join(" / "),
-      quantidade: String(itens.length),
-      cep,
-      valorProduto: subtotal.toFixed(2),
-      valorFrete: valorDoFrete.toFixed(2),
-      valorTotal: total.toFixed(2),
-      servicoFrete: servicoFreteSelecionado,
-      prazoFrete: prazoFreteSelecionado == null ? "" : String(prazoFreteSelecionado),
-      detalhes: itens.map((item) => `${item.numero}. ${item.nome} — ${item.cor} — ${moeda(item.valor)}`).join(" | ")
-    });
+    const params = parametrosFormulario();
+    salvarConsulta();
 
     window.open(`${FORMULARIO_URL}?${params.toString()}`, "_blank");
   }
@@ -509,6 +552,7 @@ Orçamento válido por 7 dias.`;
   });
 
   $("btnFormulario").addEventListener("click", abrirFormulario);
+  $("btnConsultas").addEventListener("click", abrirConsultas);
 
   $("btnLimpar").addEventListener("click", () => {
     cliente.value = "";
@@ -533,6 +577,7 @@ Orçamento válido por 7 dias.`;
 })();
 (() => {
   "use strict";
+  return; // versão antiga duplicada: mantida apenas para referência, sem execução
 
   const VALOR_BASE = 89.99;
   const LIMITE_BASE = 5;
