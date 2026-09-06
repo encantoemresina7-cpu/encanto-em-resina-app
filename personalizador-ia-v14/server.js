@@ -2,7 +2,7 @@ import express from "express";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import OpenAI from "openai";
+import OpenAI, { toFile } from "openai";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -111,9 +111,17 @@ app.post("/api/gerar-luminaria", async (req, res) => {
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+    // Força nome e MIME corretos. Em alguns ambientes o fs.ReadStream chega
+    // como application/octet-stream, que o endpoint de edição de imagens rejeita.
+    const referenceImage = await toFile(
+      await fs.promises.readFile(referenceImagePath),
+      "luminaria-referencia.jpg",
+      { type: "image/jpeg" }
+    );
+
     const result = await openai.images.edit({
       model: MODEL,
-      image: fs.createReadStream(referenceImagePath),
+      image: referenceImage,
       prompt: buildPrompt(name, color),
       size: "1536x1024",
       quality: "high",
