@@ -16,10 +16,10 @@ app.use(express.static(path.join(__dirname, "public")));
 
 const referenceImagePath = path.join(__dirname, "reference", "luminaria-referencia.jpg");
 
-// Proteção simples contra cliques repetidos e custos acidentais.
-// Em produção maior, troque por Redis/Upstash ou outro rate limiter persistente.
+// Proteção leve contra cliques repetidos depois de uma geração concluída.
+// O botão do frontend já fica desativado enquanto a IA está gerando.
 const recentRequests = new Map();
-const MIN_INTERVAL_MS = 8000;
+const MIN_INTERVAL_MS = 1500;
 
 function normalizeName(value = "") {
   return String(value)
@@ -103,13 +103,11 @@ app.post("/api/gerar-luminaria", async (req, res) => {
 
     const last = recentRequests.get(ip) || 0;
     const now = Date.now();
-    if (now - last < MIN_INTERVAL_MS) {
-      const wait = Math.ceil((MIN_INTERVAL_MS - (now - last)) / 1000);
+    if (last && now - last < MIN_INTERVAL_MS) {
       return res.status(429).json({
-        error: `Aguarde ${wait}s antes de gerar outra imagem.`,
+        error: "A geração anterior acabou de terminar. Tente novamente em um instante.",
       });
     }
-    recentRequests.set(ip, now);
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -135,6 +133,9 @@ app.post("/api/gerar-luminaria", async (req, res) => {
     if (!imageUrl) {
       throw new Error("A API retornou uma resposta sem URL ou imagem em base64.");
     }
+
+    // Marca o tempo somente depois de uma geração bem-sucedida.
+    recentRequests.set(ip, Date.now());
 
     res.json({
       ok: true,
