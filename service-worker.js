@@ -1,4 +1,4 @@
-const CACHE_NAME = "encanto-orcamento-v8-20260906";
+const CACHE_NAME = "encanto-orcamento-v9-20260906";
 
 const ARQUIVOS = [
   "./",
