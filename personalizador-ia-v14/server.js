@@ -18,7 +18,6 @@ app.use("/reference", express.static(path.join(__dirname, "reference")));
 
 const referenceImagePath = path.join(__dirname, "reference", "luminaria-referencia.jpg");
 
-// Proteção leve contra cliques repetidos depois de uma geração concluída.
 const recentRequests = new Map();
 const MIN_INTERVAL_MS = 1500;
 
@@ -68,6 +67,22 @@ Priorize fidelidade à foto de referência. Preserve cenário e base; altere pri
 `.trim();
 }
 
+async function buildDemoImage(name, color) {
+  const refB64 = await fs.promises.readFile(referenceImagePath, "base64");
+  const safeName = name.replace(/[<>&\"]/g, "");
+  const safeColor = color.replace(/[<>&\"]/g, "");
+
+  const svg = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+    <image href="data:image/jpeg;base64,${refB64}" x="0" y="0" width="1200" height="800" preserveAspectRatio="xMidYMid slice"/>
+    <rect x="0" y="650" width="1200" height="150" fill="rgba(65,22,36,0.82)"/>
+    <text x="600" y="705" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="34" font-weight="700">MODO TESTE • SEM CRÉDITOS</text>
+    <text x="600" y="752" text-anchor="middle" fill="#ffe4ed" font-family="Arial, sans-serif" font-size="28">Nome: ${safeName} • Cor: ${safeColor}</text>
+  </svg>`;
+
+  return `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
+}
+
 app.get("/health", (_req, res) => {
   res.json({
     ok: true,
@@ -95,7 +110,6 @@ app.post("/api/gerar-luminaria", async (req, res) => {
     }
 
     // MODO TESTE: não chama a API e não consome créditos.
-    // Mostra a foto de referência apenas para testar todo o fluxo do app.
     if (DEMO_MODE) {
       await new Promise((resolve) => setTimeout(resolve, 900));
       return res.json({
@@ -104,8 +118,8 @@ app.post("/api/gerar-luminaria", async (req, res) => {
         name,
         color,
         model: MODEL,
-        image_url: `/reference/luminaria-referencia.jpg?v=${Date.now()}`,
-        message: "Modo teste ativo: nenhum crédito foi usado e a foto exibida é somente a referência, não uma geração da IA.",
+        image_url: await buildDemoImage(name, color),
+        message: "Modo teste ativo: nenhum crédito foi usado. A imagem exibida serve apenas para testar o fluxo do app.",
       });
     }
 
