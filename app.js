@@ -4,7 +4,7 @@
   const VALOR_BASE = 89.99;
   const LIMITE_BASE = 5;
   const API_FRETE_URL = "https://calculadora-aurora.onrender.com/calcular-frete";
-  const FORMULARIO_URL = "https://formulario-encanto.encantoemresina7.chatgpt.site/";
+  const FORMULARIO_URL = "https://encantoemresina7-cpu.github.io/formulario-pedido-encanto/";
 
   const $ = (id) => document.getElementById(id);
   const cliente = $("cliente");
