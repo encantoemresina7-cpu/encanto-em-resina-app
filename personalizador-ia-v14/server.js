@@ -54,9 +54,9 @@ function getReferenceImagePath(color) {
   return file ? path.join(__dirname, "reference", file) : null;
 }
 
-function getReferenceImageUrl(color) {
-  const file = colorReferences[color];
-  return file ? `/reference/${encodeURIComponent(file)}?v=3` : null;
+async function getReferenceDataUrl(referenceImagePath) {
+  const imageBase64 = await fs.promises.readFile(referenceImagePath, "base64");
+  return `data:image/jpeg;base64,${imageBase64}`;
 }
 
 function buildPrompt(name, color) {
@@ -127,7 +127,7 @@ app.post("/api/gerar-luminaria", async (req, res) => {
     }
 
     if (DEMO_MODE) {
-      await new Promise((resolve) => setTimeout(resolve, 450));
+      await new Promise((resolve) => setTimeout(resolve, 350));
       return res.json({
         ok: true,
         demo: true,
@@ -135,8 +135,8 @@ app.post("/api/gerar-luminaria", async (req, res) => {
         color,
         model: MODEL,
         reference: colorReferences[color],
-        image_url: getReferenceImageUrl(color),
-        message: `Modo teste: mostrando a foto real de referência da cor ${color}. O nome ${name} foi registrado, mas ainda não foi aplicado porque a IA real está desligada. Nenhum crédito foi usado.`,
+        image_url: await getReferenceDataUrl(referenceImagePath),
+        message: `Modo teste: mostrando a foto de referência da cor ${color}. O nome ${name} foi registrado, mas ainda não foi aplicado porque a IA real está desligada. Nenhum crédito foi usado.`,
       });
     }
 
