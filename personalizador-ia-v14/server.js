@@ -10,14 +10,15 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 const MODEL = process.env.OPENAI_IMAGE_MODEL || "gpt-image-2";
+const DEMO_MODE = String(process.env.DEMO_MODE || "false").toLowerCase() === "true";
 
 app.use(express.json({ limit: "1mb" }));
 app.use(express.static(path.join(__dirname, "public")));
+app.use("/reference", express.static(path.join(__dirname, "reference")));
 
 const referenceImagePath = path.join(__dirname, "reference", "luminaria-referencia.jpg");
 
 // Proteção leve contra cliques repetidos depois de uma geração concluída.
-// O botão do frontend já fica desativado enquanto a IA está gerando.
 const recentRequests = new Map();
 const MIN_INTERVAL_MS = 1500;
 
@@ -71,6 +72,7 @@ app.get("/health", (_req, res) => {
   res.json({
     ok: true,
     model: MODEL,
+    demo_mode: DEMO_MODE,
     reference_image: fs.existsSync(referenceImagePath),
   });
 });
@@ -86,14 +88,30 @@ app.post("/api/gerar-luminaria", async (req, res) => {
     if (!allowedColors.has(color)) {
       return res.status(400).json({ error: "Escolha uma cor válida." });
     }
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(500).json({
-        error: "A variável OPENAI_API_KEY ainda não foi configurada no servidor.",
-      });
-    }
     if (!fs.existsSync(referenceImagePath)) {
       return res.status(500).json({
         error: "A imagem de referência não foi encontrada no servidor.",
+      });
+    }
+
+    // MODO TESTE: não chama a API e não consome créditos.
+    // Mostra a foto de referência apenas para testar todo o fluxo do app.
+    if (DEMO_MODE) {
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      return res.json({
+        ok: true,
+        demo: true,
+        name,
+        color,
+        model: MODEL,
+        image_url: `/reference/luminaria-referencia.jpg?v=${Date.now()}`,
+        message: "Modo teste ativo: nenhum crédito foi usado e a foto exibida é somente a referência, não uma geração da IA.",
+      });
+    }
+
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({
+        error: "A variável OPENAI_API_KEY ainda não foi configurada no servidor.",
       });
     }
 
@@ -111,8 +129,6 @@ app.post("/api/gerar-luminaria", async (req, res) => {
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    // Força nome e MIME corretos. Em alguns ambientes o fs.ReadStream chega
-    // como application/octet-stream, que o endpoint de edição de imagens rejeita.
     const referenceImage = await toFile(
       await fs.promises.readFile(referenceImagePath),
       "luminaria-referencia.jpg",
@@ -142,11 +158,11 @@ app.post("/api/gerar-luminaria", async (req, res) => {
       throw new Error("A API retornou uma resposta sem URL ou imagem em base64.");
     }
 
-    // Marca o tempo somente depois de uma geração bem-sucedida.
     recentRequests.set(ip, Date.now());
 
     res.json({
       ok: true,
+      demo: false,
       name,
       color,
       model: MODEL,
@@ -165,5 +181,5 @@ app.post("/api/gerar-luminaria", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Encanto IA rodando na porta ${PORT}`);
+  console.log(`Encanto IA rodando na porta ${PORT} | modo teste: ${DEMO_MODE}`);
 });
