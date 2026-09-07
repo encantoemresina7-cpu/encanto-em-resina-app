@@ -61,13 +61,26 @@ async function renderPinkDemo(referenceSrc,name){
  x.fillStyle='rgba(255,226,150,.32)';x.fillRect(120,615,960,9);
  return c.toDataURL('image/png',.95)
 }
+function renderDirectPreview(name,color){
+ const W=1200,H=800,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+ const bg=x.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#fff9fa');bg.addColorStop(1,'#f3e6ea');x.fillStyle=bg;x.fillRect(0,0,W,H);
+ x.fillStyle='rgba(255,255,255,.72)';x.fillRect(0,0,205,H);x.fillStyle='rgba(255,227,235,.55)';x.fillRect(95,0,80,H);
+ x.fillStyle='rgba(232,207,214,.48)';roundRect(x,170,265,1030,285,20);x.strokeStyle='rgba(211,180,189,.55)';x.lineWidth=3;x.beginPath();x.moveTo(170,365);x.lineTo(1200,365);x.stroke();
+ const glow=x.createRadialGradient(600,638,15,600,638,460);glow.addColorStop(0,'rgba(255,218,120,.58)');glow.addColorStop(1,'rgba(255,218,120,0)');x.fillStyle=glow;x.fillRect(120,540,960,160);
+ x.shadowColor='rgba(74,42,50,.24)';x.shadowBlur=20;x.shadowOffsetY=10;x.fillStyle='#fff';roundRect(x,115,625,970,106,18);x.shadowColor='transparent';
+ x.fillStyle='rgba(255,225,145,.92)';roundRect(x,145,628,910,9,4);
+ const map={Rosa:['#ff2f70','#ff91b2','#f6efeb'],Azul:['#206eda','#70b4ff','#ebf5ff'],Verde:['#159956','#80dca7','#ecfff2'],'Lilás':['#8651d1','#c09cf5','#f4edff'],Dourado:['#c98708','#f4ca57','#fff6d8'],Transparente:['#b7d7df','#e7f3f5','#ffffff']};
+ const cc=map[color]||map.Rosa,fs=fitFont(x,name,880,name.length<=5?210:180),y=625;
+ x.save();x.font=`900 ${fs}px Arial Black,Arial,sans-serif`;x.textAlign='center';x.textBaseline='alphabetic';x.lineJoin='round';x.shadowColor='rgba(90,40,55,.25)';x.shadowBlur=10;x.shadowOffsetY=5;x.strokeStyle=color==='Rosa'?'#ff4f83':cc[0];x.lineWidth=Math.max(5,fs*.035);x.strokeText(name,600,y);
+ const grad=x.createLinearGradient(0,y-fs,0,y);grad.addColorStop(0,cc[0]);grad.addColorStop(.42,cc[1]);grad.addColorStop(.62,'rgba(255,255,255,.78)');grad.addColorStop(1,cc[2]);x.fillStyle=grad;x.fillText(name,600,y);x.restore();
+ if(color==='Rosa'){x.save();x.font=`900 ${fs}px Arial Black,Arial,sans-serif`;x.textAlign='center';x.textBaseline='alphabetic';x.fillStyle='#fff';x.fillText(name,600,y);x.globalCompositeOperation='source-in';for(let i=0;i<160;i++){const px=135+Math.random()*930,py=y-fs*.88+Math.random()*fs*.46;x.fillStyle=Math.random()>.45?'rgba(255,220,158,.9)':'rgba(255,255,255,.82)';x.beginPath();x.arc(px,py,1+Math.random()*3,0,Math.PI*2);x.fill()}x.restore()}
+ x.fillStyle='rgba(255,255,255,.45)';x.font='700 21px Arial';x.textAlign='center';x.fillText('Prévia ilustrativa • Encanto em Resina',600,772);
+ return c.toDataURL('image/png',.95)
+}
 async function generate(){
- const name=cleanName(nameInput.value).trim().replace(/\s+/g,'');nameInput.value=name;namePill.textContent='Nome: '+(name||'—');if(!name){setStatus('Digite o <strong>nome</strong> antes de gerar.','error');nameInput.focus();return}
- generateBtn.disabled=true;downloadBtn.disabled=true;shareBtn.disabled=true;setStatus(`Preparando <strong>${name}</strong> na cor <strong>${selected.name}</strong>...`);showLoading();
- try{const response=await fetch('/api/gerar-luminaria',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,color:selected.name})});const data=await response.json();if(!response.ok)throw new Error(data.error||'Não foi possível gerar a imagem.');lastDemo=!!data.demo;
- let src=data.image_url;if(data.demo&&selected.name==='Rosa'){src=await renderPinkDemo(data.image_url,name);setStatus(`Prévia rosa montada com o nome <strong>${name}</strong> ✅ Nenhum crédito foi usado.`,'success')}else if(data.demo){setStatus(`Referência <strong>${selected.name}</strong> carregada. O nome <strong>${name}</strong> será aplicado quando ativarmos a IA real.`,'success')}else{setStatus('Imagem gerada com sucesso ✅','success')}
- showImage(src);modePill.textContent=data.demo?'Modo teste • sem créditos':'IA real';
- }catch(err){emptyEl.hidden=false;emptyEl.innerHTML='<strong>Não foi possível gerar.</strong><br><br>'+err.message;setStatus(err.message,'error')}finally{generateBtn.disabled=false}
+ const name=cleanName(nameInput.value).trim().replace(/\\s+/g,'');nameInput.value=name;namePill.textContent='Nome: '+(name||'—');if(!name){setStatus('Digite o <strong>nome</strong> antes de gerar.','error');nameInput.focus();return}
+ generateBtn.disabled=true;downloadBtn.disabled=true;shareBtn.disabled=true;setStatus('Montando sua prévia...');showLoading();
+ try{const src=renderDirectPreview(name,selected.name);lastDemo=true;showImage(src);modePill.textContent='Prévia instantânea';setStatus(`Prévia de <strong>${name}</strong> em <strong>${selected.name}</strong> pronta ✅`,'success')}catch(err){emptyEl.hidden=false;emptyEl.innerHTML='<strong>Não foi possível gerar.</strong>';setStatus(err.message,'error')}finally{generateBtn.disabled=false}
 }
 generateBtn.onclick=generate;nameInput.addEventListener('keydown',e=>{if(e.key==='Enter')generate()});
 downloadBtn.onclick=()=>{if(!lastImage)return;const n=cleanName(nameInput.value).trim().replace(/\s+/g,'')||'luminaria',a=document.createElement('a');a.href=lastImage;a.download=`luminaria-${n.toLowerCase()}-${selected.name.toLowerCase()}.png`;document.body.appendChild(a);a.click();a.remove()};
