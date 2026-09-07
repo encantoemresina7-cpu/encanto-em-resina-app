@@ -54,9 +54,80 @@ function getReferenceImagePath(color) {
   return file ? path.join(__dirname, "reference", file) : null;
 }
 
-async function getReferenceDataUrl(referenceImagePath) {
-  const imageBase64 = await fs.promises.readFile(referenceImagePath, "base64");
-  return `data:image/jpeg;base64,${imageBase64}`;
+function colorConfig(color) {
+  const map = {
+    Rosa: { top: "#f22968", mid: "#ff88ad", edge: "#ff4f83" },
+    Azul: { top: "#1968d8", mid: "#71aaff", edge: "#3282ef" },
+    Verde: { top: "#16964c", mid: "#76cf92", edge: "#28ad63" },
+    "Lilás": { top: "#7d35c4", mid: "#bc82ef", edge: "#9957d8" },
+    Dourado: { top: "#d59a12", mid: "#ffd96a", edge: "#e7b02b" },
+    Transparente: { top: "#eaf3f7", mid: "#ffffff", edge: "#d4e6ee" },
+  };
+  return map[color] || map.Rosa;
+}
+
+function buildDemoPreview(name, color) {
+  const c = colorConfig(color);
+  const safeName = name.replace(/[<>&\"]/g, "");
+  const len = Math.max(1, safeName.length);
+  const fontSize = len <= 5 ? 205 : len <= 7 ? 170 : len <= 9 ? 140 : 112;
+  const tracking = len <= 6 ? 6 : 2;
+
+  const svg = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+    <defs>
+      <linearGradient id="wall" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#fff7f8"/>
+        <stop offset="1" stop-color="#ecd9d6"/>
+      </linearGradient>
+      <linearGradient id="letters" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="${c.top}"/>
+        <stop offset="0.45" stop-color="${c.mid}" stop-opacity="0.94"/>
+        <stop offset="0.62" stop-color="#ffffff" stop-opacity="0.78"/>
+        <stop offset="1" stop-color="#ffffff" stop-opacity="0.38"/>
+      </linearGradient>
+      <filter id="soft"><feGaussianBlur stdDeviation="8"/></filter>
+      <filter id="glow"><feGaussianBlur stdDeviation="13" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <filter id="shadow"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#6f4a43" flood-opacity="0.22"/></filter>
+    </defs>
+
+    <rect width="1200" height="800" fill="url(#wall)"/>
+    <rect x="0" y="0" width="190" height="800" fill="#fff" opacity="0.8"/>
+    <rect x="72" y="0" width="90" height="800" fill="#f6d8dc" opacity="0.7"/>
+    <rect x="170" y="268" width="1030" height="280" rx="18" fill="#f8f3f0"/>
+    <line x1="170" y1="365" x2="1200" y2="365" stroke="#ddc9c2" stroke-width="3"/>
+    <circle cx="382" cy="415" r="8" fill="#d8c2bb"/>
+    <circle cx="770" cy="415" r="8" fill="#d8c2bb"/>
+    <circle cx="1050" cy="415" r="8" fill="#d8c2bb"/>
+
+    <circle cx="420" cy="185" r="62" fill="#ceb3a5" opacity="0.72"/>
+    <circle cx="378" cy="138" r="24" fill="#ceb3a5" opacity="0.72"/>
+    <circle cx="462" cy="138" r="24" fill="#ceb3a5" opacity="0.72"/>
+    <circle cx="403" cy="177" r="5" fill="#76594f"/>
+    <circle cx="437" cy="177" r="5" fill="#76594f"/>
+    <ellipse cx="420" cy="197" rx="11" ry="8" fill="#8f695b"/>
+
+    <circle cx="745" cy="115" r="54" fill="#ffd56c" opacity="0.9" filter="url(#glow)"/>
+    <circle cx="770" cy="98" r="52" fill="#fff2e6"/>
+    <circle cx="680" cy="80" r="5" fill="#f4b5c5"/>
+    <circle cx="820" cy="73" r="4" fill="#f4b5c5"/>
+    <path d="M588 165 l13 26 29 4-21 20 5 29-26-14-26 14 5-29-21-20 29-4z" fill="#ffd3df" opacity="0.7"/>
+
+    <ellipse cx="600" cy="674" rx="470" ry="35" fill="#f4c86b" opacity="0.28" filter="url(#soft)"/>
+    <rect x="115" y="620" width="970" height="108" rx="16" fill="#ffffff" filter="url(#shadow)"/>
+    <rect x="145" y="625" width="910" height="9" rx="4" fill="#ffd980" opacity="0.82" filter="url(#glow)"/>
+
+    <text x="600" y="618" text-anchor="middle"
+      font-family="Arial Black, Arial, sans-serif" font-size="${fontSize}" font-weight="900"
+      letter-spacing="${tracking}" fill="url(#letters)" stroke="${c.edge}" stroke-width="3"
+      paint-order="stroke" filter="url(#shadow)">${safeName}</text>
+
+    <text x="600" y="762" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#8c7075">
+      Prévia de teste • ${color} • sem consumo de créditos
+    </text>
+  </svg>`;
+
+  return `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
 }
 
 function buildPrompt(name, color) {
@@ -87,19 +158,9 @@ Priorize fidelidade à referência aprovada da cor "${color}" e altere principal
 
 app.get("/health", (_req, res) => {
   const references = Object.fromEntries(
-    Object.entries(colorReferences).map(([color, file]) => [
-      color,
-      fs.existsSync(path.join(__dirname, "reference", file)),
-    ])
+    Object.entries(colorReferences).map(([color, file]) => [color, fs.existsSync(path.join(__dirname, "reference", file))])
   );
-
-  res.json({
-    ok: true,
-    model: MODEL,
-    demo_mode: DEMO_MODE,
-    references,
-    vermelho: "aguardando_foto_aprovada",
-  });
+  res.json({ ok: true, model: MODEL, demo_mode: DEMO_MODE, references, vermelho: "aguardando_foto_aprovada" });
 });
 
 app.post("/api/gerar-luminaria", async (req, res) => {
@@ -107,27 +168,17 @@ app.post("/api/gerar-luminaria", async (req, res) => {
     const name = normalizeName(req.body?.name);
     const color = String(req.body?.color || "");
 
-    if (!name) {
-      return res.status(400).json({ error: "Digite um nome válido." });
-    }
-    if (!allowedColors.has(color)) {
-      return res.status(400).json({ error: "Escolha uma cor válida." });
-    }
-    if (color === "Vermelho") {
-      return res.status(400).json({
-        error: "A cor Vermelho está aguardando uma foto de referência aprovada.",
-      });
-    }
+    if (!name) return res.status(400).json({ error: "Digite um nome válido." });
+    if (!allowedColors.has(color)) return res.status(400).json({ error: "Escolha uma cor válida." });
+    if (color === "Vermelho") return res.status(400).json({ error: "A cor Vermelho está aguardando uma foto de referência aprovada." });
 
     const referenceImagePath = getReferenceImagePath(color);
     if (!referenceImagePath || !fs.existsSync(referenceImagePath)) {
-      return res.status(500).json({
-        error: `A foto de referência aprovada da cor ${color} não foi encontrada no servidor.`,
-      });
+      return res.status(500).json({ error: `A foto de referência aprovada da cor ${color} não foi encontrada no servidor.` });
     }
 
     if (DEMO_MODE) {
-      await new Promise((resolve) => setTimeout(resolve, 350));
+      await new Promise((resolve) => setTimeout(resolve, 250));
       return res.json({
         ok: true,
         demo: true,
@@ -135,35 +186,21 @@ app.post("/api/gerar-luminaria", async (req, res) => {
         color,
         model: MODEL,
         reference: colorReferences[color],
-        image_url: await getReferenceDataUrl(referenceImagePath),
-        message: `Modo teste: mostrando a foto de referência da cor ${color}. O nome ${name} foi registrado, mas ainda não foi aplicado porque a IA real está desligada. Nenhum crédito foi usado.`,
+        image_url: buildDemoPreview(name, color),
+        message: `Prévia de teste criada para ${name} na cor ${color}. Nenhum crédito foi usado.`
       });
     }
 
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(500).json({
-        error: "A variável OPENAI_API_KEY ainda não foi configurada no servidor.",
-      });
-    }
+    if (!process.env.OPENAI_API_KEY) return res.status(500).json({ error: "A variável OPENAI_API_KEY ainda não foi configurada no servidor." });
 
-    const ip = req.headers["x-forwarded-for"]?.toString().split(",")[0]?.trim()
-      || req.socket.remoteAddress
-      || "unknown";
+    const ip = req.headers["x-forwarded-for"]?.toString().split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
     const last = recentRequests.get(ip) || 0;
     const now = Date.now();
-    if (last && now - last < MIN_INTERVAL_MS) {
-      return res.status(429).json({
-        error: "A geração anterior acabou de terminar. Tente novamente em um instante.",
-      });
-    }
+    if (last && now - last < MIN_INTERVAL_MS) return res.status(429).json({ error: "A geração anterior acabou de terminar. Tente novamente em um instante." });
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const fileName = colorReferences[color];
-    const referenceImage = await toFile(
-      await fs.promises.readFile(referenceImagePath),
-      fileName,
-      { type: "image/jpeg" }
-    );
+    const referenceImage = await toFile(await fs.promises.readFile(referenceImagePath), fileName, { type: "image/jpeg" });
 
     const result = await openai.images.edit({
       model: MODEL,
